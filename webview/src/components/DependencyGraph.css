@@ -1,0 +1,148 @@
+.dependency-graph {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.graph-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.graph-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin: 0 0 8px 0;
+}
+
+.graph-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.color-legend {
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.read {
+  background: #569CD6;
+}
+
+.legend-dot.write {
+  background: #4EC9B0;
+}
+
+.graph-container {
+  width: 100%;
+  height: 600px;
+  background: var(--bg-panel);
+  position: relative;
+  overflow: hidden;
+}
+
+.graph-container svg {
+  width: 100%;
+  height: 100%;
+}
+
+.node {
+  cursor: move;
+  cursor: grab;
+}
+
+.node:active {
+  cursor: grabbing;
+}
+
+.node circle {
+  transition: all 0.2s ease;
+}
+
+.node:hover circle {
+  stroke-width: 3;
+  filter: brightness(1.2);
+}
+
+.node text {
+  pointer-events: none;
+  user-select: none;
+}
+
+.link {
+  pointer-events: none;
+}
+
+.graph-stats {
+  display: flex;
+  gap: 24px;
+  padding: 12px 20px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.stat-label {
+  color: var(--text-dim);
+}
+
+.stat-value {
+  font-family: var(--font-code);
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.dependency-graph-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+}
+
+.dependency-graph-empty .empty-icon {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.dependency-graph-empty p {
+  font-size: 14px;
+  margin: 0 0 8px 0;
+  color: var(--text);
+}
+
+.dependency-graph-empty .empty-hint {
+  font-size: 12px;
+}

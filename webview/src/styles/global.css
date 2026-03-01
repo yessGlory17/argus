@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* VS Code Dark+ Theme Colors */
+  --bg-dark: #1E1E1E;
+  --bg-elevated: #252526;
+  --bg-panel: #2D2D30;
+  --bg-hover: #2A2D2E;
+
+  --border: #3E3E42;
+  --border-focus: #007ACC;
+
+  --text: #CCCCCC;
+  --text-bright: #FFFFFF;
+  --text-dim: #858585;
+
+  /* Status Colors (VS Code inspired) */
+  --status-success: #4EC9B0;
+  --status-warning: #CE9178;
+  --status-error: #F48771;
+  --status-info: #569CD6;
+  --accent: #007ACC;
+
+  /* Syntax Highlighting */
+  --syntax-keyword: #569CD6;
+  --syntax-string: #CE9178;
+  --syntax-function: #DCDCAA;
+  --syntax-comment: #6A9955;
+  --syntax-number: #B5CEA8;
+
+  /* Chart Colors */
+  --chart-1: #4EC9B0;
+  --chart-2: #569CD6;
+  --chart-3: #C586C0;
+  --chart-4: #DCDCAA;
+  --chart-5: #CE9178;
+
+  /* Typography */
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-code: 'JetBrains Mono', monospace;
+
+  /* Transitions */
+  --transition: 0.2s ease;
+}
+
+body {
+  font-family: var(--font-display);
+  background: var(--bg-dark);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Selection */
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-bright);
+}
+
+code, pre {
+  font-family: var(--font-code);
+}
+
+/* Simple Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.2s ease-out;
+}

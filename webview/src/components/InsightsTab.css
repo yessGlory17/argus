@@ -1,0 +1,148 @@
+.insights-tab {
+  width: 100%;
+}
+
+.insights-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insight-card {
+  padding: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  border-radius: 4px;
+  transition: border-color var(--transition);
+}
+
+.insight-card:hover {
+  border-color: currentColor;
+}
+
+.insight-card.optimization {
+  border-left-color: #4EC9B0;
+}
+
+.insight-card.warning {
+  border-left-color: #CE9178;
+}
+
+.insight-card.success {
+  border-left-color: #4EC9B0;
+}
+
+.insight-card.info {
+  border-left-color: #569CD6;
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.insight-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.insight-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin: 0;
+}
+
+.insight-description {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.insight-savings {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-panel);
+  border-radius: 3px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.savings-label {
+  color: var(--text-dim);
+}
+
+.savings-value {
+  font-family: var(--font-code);
+  font-weight: 600;
+  color: #4EC9B0;
+}
+
+.insight-steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.steps-label {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.step-badge {
+  font-family: var(--font-code);
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.step-badge:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+.steps-more {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--font-code);
+}
+
+.no-insights {
+  text-align: center;
+  padding: 48px 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.no-insights-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.no-insights h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+
+.no-insights p {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+}

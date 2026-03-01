@@ -1,0 +1,329 @@
+.steps-tab {
+  width: 100%;
+}
+
+.steps-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-buttons button {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.filter-buttons button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.filter-buttons button.active {
+  color: var(--text-bright);
+  background: var(--bg-panel);
+  border-color: var(--accent);
+}
+
+.steps-count {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.step-item {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+.step-item:hover {
+  border-color: var(--border-focus);
+}
+
+.step-item.expanded {
+  border-color: var(--accent);
+}
+
+.step-item.highlight {
+  border-color: var(--status-warning);
+  box-shadow: 0 0 0 2px rgba(206,145,120,0.2);
+}
+
+.step-item.has-issues {
+  border-left: 3px solid var(--status-error);
+}
+
+.step-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--transition);
+  gap: 12px;
+}
+
+.step-header:hover {
+  background: var(--bg-hover);
+}
+
+.step-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0; /* Allow flex items to shrink below content size */
+  max-width: calc(100% - 150px); /* Leave space for step-right */
+  overflow: hidden;
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.step-dot.thinking {
+  background: #C586C0;
+}
+
+.step-dot.text {
+  background: var(--text-dim);
+}
+
+.step-dot:not(.thinking):not(.text) {
+  background: var(--status-info);
+}
+
+.step-index {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 36px;
+  flex-shrink: 0;
+}
+
+.step-time {
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.7;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.step-type {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-bright);
+  font-family: var(--font-code);
+  flex-shrink: 0; /* Don't shrink tool name */
+}
+
+.step-summary {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text);
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400px; /* Limit width but don't expand to fill space */
+}
+
+.step-failed {
+  color: var(--status-error);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-success {
+  color: var(--status-success);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0; /* Never shrink the right side */
+}
+
+.step-cost {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap; /* Don't wrap cost */
+}
+
+.step-expand {
+  font-size: 10px;
+  color: var(--text-dim);
+  transition: transform var(--transition);
+}
+
+.step-item.expanded .step-expand {
+  transform: rotate(90deg);
+}
+
+.step-details {
+  padding: 0 16px 16px 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.step-findings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.finding-inline {
+  padding: 12px;
+  border-left: 3px solid;
+  border-radius: 4px;
+  background: var(--bg-panel);
+}
+
+.finding-inline.error {
+  border-left-color: var(--status-error);
+}
+
+.finding-inline.warning {
+  border-left-color: var(--status-warning);
+}
+
+.finding-inline.info {
+  border-left-color: var(--status-info);
+}
+
+.finding-inline strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-bright);
+}
+
+.finding-inline p {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.detail-code {
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg-panel);
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.detail-text {
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg-panel);
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.token-grid strong {
+  color: var(--text-bright);
+}
+
+.subagents-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.subagents-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-bright);
+}
+
+.subagent-item {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.subagent-item code {
+  font-family: var(--font-code);
+  color: var(--syntax-keyword);
+  background: var(--bg-panel);
+  padding: 2px 6px;
+  border-radius: 3px;
+}

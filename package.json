@@ -1,0 +1,142 @@
+{
+  "name": "argus",
+  "displayName": "Argus - Claude Code Session Debugger",
+  "description": "Analyze and debug Claude Code sessions with detailed insights and cost analysis",
+  "version": "0.1.0",
+  "publisher": "argus",
+  "author": {
+    "name": "Ozgur Kurucan",
+    "email": "ozgurkurucan337@gmail.com"
+  },
+  "license": "MIT",
+  "icon": "icon-128.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Other"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "debugger",
+    "session-analysis",
+    "cost-tracking",
+    "performance",
+    "analytics",
+    "anthropic"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yessGlory17/argus.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yessGlory17/argus/issues"
+  },
+  "homepage": "https://github.com/yessGlory17/argus#readme",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "argus",
+          "title": "Argus",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "views": {
+      "argus": [
+        {
+          "id": "argusSessionList",
+          "name": "Sessions",
+          "contextualTitle": "Claude Code Sessions"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "argus.refreshSessions",
+        "title": "Refresh Sessions",
+        "icon": "$(refresh)",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.openSessionDetail",
+        "title": "Open Session Detail",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.openSessionTab",
+        "title": "Open Session Tab",
+        "category": "Argus"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "argus.refreshSessions",
+          "when": "view == argusSessionList",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Argus",
+      "properties": {
+        "argus.scanDepth": {
+          "type": "number",
+          "default": 5,
+          "description": "Maximum directory depth for scanning .claude directories"
+        },
+        "argus.language": {
+          "type": "string",
+          "default": "en",
+          "enum": [
+            "en",
+            "tr"
+          ],
+          "description": "Language for analysis findings"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile && npm run build:webview",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build:webview": "vite build",
+    "dev:webview": "vite",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.x",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^5.1.4",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "@types/d3": "^7.4.3",
+    "chart.js": "^4.5.1",
+    "d3": "^7.9.0",
+    "lucide-react": "^0.575.0",
+    "react": "^19.2.4",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.2.4",
+    "react-is": "^19.2.4",
+    "recharts": "^3.7.0"
+  }
+}

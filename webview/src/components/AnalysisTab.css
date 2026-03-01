@@ -1,0 +1,159 @@
+.analysis-tab {
+  width: 100%;
+}
+
+.empty-state {
+  padding: 48px;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.debug-summary {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.debug-summary h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: var(--text-bright);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.summary-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-family: var(--font-code);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.findings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.finding-card {
+  padding: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  border-radius: 4px;
+  transition: border-color var(--transition);
+}
+
+.finding-card:hover {
+  border-color: currentColor;
+}
+
+.finding-card.error {
+  border-left-color: var(--status-error);
+}
+
+.finding-card.warning {
+  border-left-color: var(--status-warning);
+}
+
+.finding-card.info {
+  border-left-color: var(--status-info);
+}
+
+.finding-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.finding-severity {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 3px;
+  background: var(--bg-panel);
+}
+
+.finding-card.error .finding-severity {
+  color: var(--status-error);
+}
+
+.finding-card.warning .finding-severity {
+  color: var(--status-warning);
+}
+
+.finding-card.info .finding-severity {
+  color: var(--status-info);
+}
+
+.finding-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.finding-description {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.finding-cost {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--status-error);
+  margin-top: 8px;
+}
+
+.finding-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.step-link {
+  font-family: var(--font-code);
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.step-link:hover {
+  background: var(--accent);
+  color: var(--bg-dark);
+  border-color: var(--accent);
+}

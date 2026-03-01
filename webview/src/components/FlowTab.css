@@ -1,0 +1,116 @@
+.flow-tab {
+  width: 100%;
+}
+
+.flow-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.flow-stat {
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.flow-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.flow-value {
+  font-family: var(--font-code);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.flow-sublabel {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-family: var(--font-code);
+}
+
+.file-flow-graph h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-bright);
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.file-node {
+  padding: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.file-path {
+  margin-bottom: 12px;
+}
+
+.file-path code {
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.file-full-path {
+  display: block;
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.file-ops {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.op-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.op-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.op-group.read .op-label {
+  color: var(--status-info);
+}
+
+.op-group.write .op-label {
+  color: var(--status-success);
+}
+
+.op-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.empty {
+  padding: 48px;
+  text-align: center;
+  color: var(--text-dim);
+}
