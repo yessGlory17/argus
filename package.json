@@ -1,5 +1,5 @@
 {
-  "name": "argus",
+  "name": "argus-claude",
   "displayName": "Argus - Claude Code Session Debugger",
   "description": "Analyze and debug Claude Code sessions with detailed insights and cost analysis",
   "version": "0.1.0",
