@@ -3,7 +3,7 @@
   "displayName": "Argus - Claude Code Session Debugger",
   "description": "Analyze and debug Claude Code sessions with detailed insights and cost analysis",
   "version": "0.1.0",
-  "publisher": "argus",
+  "publisher": "argus-claude",
   "author": {
     "name": "Ozgur Kurucan",
     "email": "ozgurkurucan337@gmail.com"
