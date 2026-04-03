@@ -266,13 +266,22 @@ export class ParserService {
         }
       }
 
-      // Process tool results
-      if (event.type === 'user' && event.toolUseResult && event.sourceToolAssistantUUID) {
-        const toolStep = toolCallMap.get(event.sourceToolAssistantUUID);
-        if (toolStep && typeof toolStep.index === 'number') {
-          const result = event.toolUseResult;
-          steps[toolStep.index].toolResult = JSON.stringify(result);
-          steps[toolStep.index].toolSuccess = !result.is_error;
+      // Process tool results via message content (tool_result blocks keyed by tool_use_id)
+      if (event.type === 'user' && event.message?.content) {
+        const content = Array.isArray(event.message.content) ? event.message.content : [];
+        for (const block of content) {
+          if (block.type === 'tool_result' && block.tool_use_id) {
+            const toolStep = toolCallMap.get(block.tool_use_id);
+            if (toolStep && typeof toolStep.index === 'number') {
+              let result = block.content ?? '';
+              if (Array.isArray(result)) {
+                result = result.map((r: any) => r.text ?? JSON.stringify(r)).join('\n');
+              }
+              steps[toolStep.index].toolResult =
+                typeof result === 'string' ? result : JSON.stringify(result);
+              steps[toolStep.index].toolSuccess = !block.is_error;
+            }
+          }
         }
       }
     }

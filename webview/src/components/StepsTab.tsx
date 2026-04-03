@@ -183,6 +183,15 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
                     </div>
                   )}
 
+                  {step.type === 'text' && step.content && (
+                    <div className="detail-section">
+                      <div className="detail-label">Text</div>
+                      <pre className="detail-text">
+                        {step.content.length > 2000 ? step.content.substring(0, 2000) + '...' : step.content}
+                      </pre>
+                    </div>
+                  )}
+
                   {step.usage && (
                     <div className="detail-section">
                       <div className="detail-label">Token Usage</div>
