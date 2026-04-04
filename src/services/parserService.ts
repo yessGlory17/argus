@@ -244,9 +244,9 @@ export class ParserService {
               cost: 0,
             };
 
-            if (block.id) {
-              toolCallMap.set(block.id, toolStep);
-            }
+            // Key by assistant event UUID — sourceToolAssistantUUID in
+            // user events references this, not the tool_use block id.
+            toolCallMap.set(event.uuid, toolStep);
 
             steps.push(toolStep as Step);
 

@@ -168,8 +168,25 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
                   {step.toolResult && (
                     <div className="detail-section">
                       <div className="detail-label">Tool Result</div>
+                      <pre className="detail-code">
+                        {(() => {
+                          try {
+                            const parsed = JSON.parse(step.toolResult);
+                            const pretty = JSON.stringify(parsed, null, 2);
+                            return pretty.length > 2000 ? pretty.substring(0, 2000) + '...' : pretty;
+                          } catch {
+                            return step.toolResult.length > 2000 ? step.toolResult.substring(0, 2000) + '...' : step.toolResult;
+                          }
+                        })()}
+                      </pre>
+                    </div>
+                  )}
+
+                  {step.type === 'text' && step.content && (
+                    <div className="detail-section">
+                      <div className="detail-label">Text</div>
                       <pre className="detail-text">
-                        {step.toolResult.length > 2000 ? step.toolResult.substring(0, 2000) + '...' : step.toolResult}
+                        {step.content.length > 2000 ? step.content.substring(0, 2000) + '...' : step.content}
                       </pre>
                     </div>
                   )}
