@@ -98,6 +98,12 @@ export class ParserService {
           if (!prompt && base.type === 'user') {
             prompt = this.extractPromptFromEvent(base);
           }
+
+          // Stop early once we have all the metadata we need
+          if (model && prompt && cwd) {
+            rl.close();
+            break;
+          }
         } catch {
           continue;
         }

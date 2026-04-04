@@ -163,6 +163,8 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  listViewProvider.setRefreshCallback(() => refreshList());
+
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(SessionListViewProvider.viewId, listViewProvider, {
       webviewOptions: { retainContextWhenHidden: true },
@@ -173,15 +175,20 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('argus.refreshSessions', async () => {
-      try {
-        await discoveryService.refreshDiscovery();
-        allSessions = await discoveryService.getSessionList(true);
-        refreshList();
-        vscode.window.showInformationMessage(`Sessions refreshed (${allSessions.length} found)`);
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage('Failed to refresh sessions: ' + msg);
-      }
+      await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: 'Argus: Refreshing sessions...' },
+        async () => {
+          try {
+            await discoveryService.refreshDiscovery();
+            allSessions = await discoveryService.getSessionList();
+            refreshList();
+            vscode.window.showInformationMessage(`Sessions refreshed (${allSessions.length} found)`);
+          } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage('Failed to refresh sessions: ' + msg);
+          }
+        }
+      );
     })
   );
 
