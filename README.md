@@ -126,43 +126,46 @@
 | Feature | Description |
 |---------|-------------|
 | 🔎 **Automatic Scanning** | Discovers all Claude Code sessions from `~/.claude/projects/` |
-| 🎛️ **Smart Filtering** | Configurable depth scanning with performance optimizations |
-| 📡 **Real-time Monitoring** | Watch sessions update as they progress |
-| 📂 **Multi-project Support** | Manages sessions across multiple projects simultaneously |
+| 🎛️ **Smart Filtering** | Filter by model (Opus/Sonnet/Haiku), date presets (1h, 24h, 7d, 30d), or custom calendar range |
+| 📅 **Custom Calendar Picker** | Built-in range selector with month navigation, today highlight, and range visualization |
+| 📡 **Real-time Monitoring** | Watch sessions update as they progress with live file watching |
+| 📂 **Session Grouping** | Group sessions by project or model, with collapsible sections |
+| 🔄 **Refresh with Progress** | Manual refresh with progress notification and optimized discovery |
 
 </details>
 
 ### 📊 **Comprehensive Analysis Dashboard**
 
 <details open>
-<summary><b>8 Powerful Analysis Tabs</b></summary>
+<summary><b>7 Powerful Analysis Tabs</b></summary>
 <br/>
 
 | Tab | Features |
 |-----|----------|
-| **📋 Overview** | Session statistics • Cost analysis • Timeline visualization • Quick summary |
+| **📝 Steps** | Full-text search • Multi-select tool filter • Status filter (Success/Failed/Issues) • Sort by time or cost • Per-step duration • Lucide icons per tool type • Inline findings |
 | **🔍 Analysis** | 6 intelligent rules: Duplicate Reads • Unused Operations • Retry Loops • Failed Tools • Context Pressure • Compaction Events |
 | **💰 Cost** | Step-by-step breakdown • Token visualization • Cache hit ratio • Model attribution • Spending graphs |
 | **⚡ Performance** | Efficiency score • Wasted cost calculations • Timing analysis • Bottleneck identification |
 | **🌊 Flow** | Interactive dependency graph • File operation flow • Read/Write/Edit tracking • Step relationships |
 | **🧠 Context** | Token usage tracking • Cache performance • Window utilization • I/O distribution |
-| **📝 Steps** | Detailed execution log • Tool call inspection • Input/output viewing • Per-step timing & costs |
 | **💡 Insights** | AI-powered recommendations • Pattern recognition • Optimization suggestions • Best practices |
 
 </details>
 
 ### 🎨 **Modern UI/UX**
 - **React-powered Webviews**: Smooth, responsive interface built with React 19
+- **Custom Dropdowns & Calendar**: Fully styled filter controls — no native browser widgets
 - **Interactive Visualizations**: Charts powered by Chart.js and Recharts
 - **D3.js Graphs**: Beautiful dependency flow diagrams
 - **Dark Mode Native**: Seamlessly integrates with VS Code themes
-- **Lucide Icons**: Modern, consistent iconography
+- **Lucide Icons**: Per-tool-type stroke icons with a pastel color palette
+- **Sticky Filters**: Header, tabs, and filters stay fixed while content scrolls
 
 ### 🔧 **Developer Experience**
 
-- **Tree View Integration**: Sessions appear in VS Code sidebar
+- **Sidebar Webview**: Sessions listed with inline search, model & date filters
 - **Command Palette**: Quick access to all features
-- **Status Bar Item**: One-click dashboard access
+- **Status Bar Item**: Argus indicator in the status bar
 - **Hot Reload**: Vite-powered development for instant updates
 - **TypeScript**: Fully typed for better DX and reliability
 
@@ -347,8 +350,14 @@ Contributions are welcome! Please:
 
 Access via Command Palette (`Ctrl/Cmd + Shift + P`):
 
-- `Argus: Refresh Sessions` - Manually refresh the session list
-- `Argus: Open Session Detail` - View specific session analysis
+| Command | Description |
+|---------|-------------|
+| `Argus: Refresh Sessions` | Refresh the session list with progress indicator |
+| `Argus: Open Session Detail` | Open detailed analysis for a session |
+| `Argus: Clear All Filters` | Reset all sidebar filters |
+| `Argus: Group by Project` | Group sessions by project directory |
+| `Argus: Group by Model` | Group sessions by Claude model |
+| `Argus: Flat List` | Remove session grouping |
 
 ### Configuration
 
@@ -404,39 +413,41 @@ Customize Argus in VS Code Settings:
 ```
 argus-vscode/
 ├── src/                        # Extension source code
-│   ├── extension.ts           # Main entry point
+│   ├── extension.ts           # Main entry point & command registration
 │   ├── types/                 # TypeScript definitions
-│   │   ├── models.ts          # Core data models
+│   │   ├── models.ts          # Core data models & filter state
 │   │   └── parser.ts          # JSONL parsing types
 │   ├── services/              # Business logic layer
-│   │   ├── discoveryService.ts    # Session discovery & scanning
-│   │   ├── parserService.ts       # JSONL parser
-│   │   └── analyzerService.ts     # Analysis engine with rules
+│   │   ├── discoveryService.ts    # Session discovery & file system scanning
+│   │   ├── parserService.ts       # JSONL streaming parser & cost calculation
+│   │   └── analyzerService.ts     # Analysis engine with 6 rules
 │   └── providers/             # VS Code API providers
-│       ├── sessionTreeProvider.ts      # Tree view in sidebar
-│       └── sessionWebviewProvider.ts   # React webview host
+│       ├── sessionListViewProvider.ts     # Sidebar: search, filters, calendar, session list
+│       ├── sessionWebviewProviderReact.ts # React webview host & live file watcher
+│       └── datePickerPanel.ts             # Custom date picker panel
 │
 ├── webview/                   # React UI
 │   ├── src/
 │   │   ├── main.tsx          # React entry point
-│   │   ├── components/       # UI components
-│   │   │   ├── AnalysisTab.tsx
-│   │   │   ├── CostTab.tsx
-│   │   │   ├── PerformanceTab.tsx
-│   │   │   ├── FlowTab.tsx
-│   │   │   ├── ContextTab.tsx
-│   │   │   ├── StepsTab.tsx
-│   │   │   ├── InsightsTab.tsx
-│   │   │   ├── DependencyGraph.tsx
-│   │   │   ├── LiveMonitor.tsx
-│   │   │   ├── SessionNotes.tsx
-│   │   │   └── GlobalSearch.tsx
+│   │   ├── App.tsx           # Main app with tab routing
+│   │   ├── components/       # UI components (11 tabs + utilities)
+│   │   │   ├── StepsTab.tsx       # Steps with search, filter dropdowns, icons
+│   │   │   ├── AnalysisTab.tsx    # Findings & rule results
+│   │   │   ├── CostTab.tsx        # Cost breakdown & charts
+│   │   │   ├── FlowTab.tsx        # File operation flow
+│   │   │   ├── ContextTab.tsx     # Token & cache analysis
+│   │   │   ├── PerformanceTab.tsx # Efficiency scoring
+│   │   │   ├── InsightsTab.tsx    # Recommendations
+│   │   │   ├── DependencyGraph.tsx # D3-powered graph
+│   │   │   ├── SessionNotes.tsx   # Per-session notes
+│   │   │   └── ...
+│   │   ├── styles/           # Global CSS & theme variables
 │   │   └── types/            # Frontend types
 │   └── index.html            # Webview template
 │
 ├── package.json              # Extension manifest
 ├── tsconfig.json            # TypeScript config
-└── vite.config.js          # Vite bundler config
+└── vite.config.ts           # Vite bundler config
 ```
 
 ### Analysis Engine
@@ -468,19 +479,19 @@ interface AnalysisRule {
 <tr>
 <td align="center" width="25%">
 <br/>
-<h3>5,649</h3>
+<h3>9,900+</h3>
 <sub><b>Lines of Code</b></sub>
 <br/><br/>
 </td>
 <td align="center" width="25%">
 <br/>
-<h3>25+</h3>
-<sub><b>TypeScript Files</b></sub>
+<h3>40+</h3>
+<sub><b>Source Files</b></sub>
 <br/><br/>
 </td>
 <td align="center" width="25%">
 <br/>
-<h3>12+</h3>
+<h3>11+</h3>
 <sub><b>React Components</b></sub>
 <br/><br/>
 </td>
@@ -523,14 +534,16 @@ interface AnalysisRule {
 
 ### Key Capabilities
 
-- ✅ **JSONL Parsing**: High-performance streaming parser for large session files
-- ✅ **Cost Calculation**: Accurate token-based cost estimation
-- ✅ **Dependency Tracking**: File operation dependency graph generation
+- ✅ **JSONL Parsing**: High-performance streaming parser with early-exit optimization
+- ✅ **Cost Calculation**: Accurate token-based cost estimation per step and session
+- ✅ **Dependency Tracking**: File operation dependency graph generation with D3.js
 - ✅ **Context Metrics**: Cache hit ratio and token utilization analysis
-- ✅ **Real-time Updates**: Live session monitoring as Claude Code runs
-- ✅ **Multi-session Management**: Handle dozens of sessions simultaneously
-- ✅ **Export Capabilities**: Save analysis results for sharing
-- ✅ **Search & Filter**: Quick navigation across large sessions
+- ✅ **Real-time Updates**: Live session monitoring via file watchers as Claude Code runs
+- ✅ **Multi-session Management**: Handle dozens of sessions with grouping and filtering
+- ✅ **Advanced Filtering**: Model/date/text search in sidebar, tool/status/sort in Steps tab
+- ✅ **Custom Calendar**: Built-in date range picker with range visualization
+- ✅ **Step Duration**: Per-step timing calculated from consecutive timestamps
+- ✅ **Session Notes**: Persist notes per session for future reference
 
 ---
 
