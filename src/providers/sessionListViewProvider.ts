@@ -8,6 +8,7 @@ export class SessionListViewProvider implements vscode.WebviewViewProvider {
   private _sessions: SessionSummary[] = [];
   private _filterState?: FilterState;
   private _extensionPath: string;
+  private _onRefresh?: () => void;
 
   constructor(
     extensionPath: string,
@@ -17,6 +18,10 @@ export class SessionListViewProvider implements vscode.WebviewViewProvider {
     private readonly _onDateFilter: (preset: string, from?: number, to?: number) => void
   ) {
     this._extensionPath = extensionPath;
+  }
+
+  setRefreshCallback(cb: () => void): void {
+    this._onRefresh = cb;
   }
 
   resolveWebviewView(
@@ -49,6 +54,13 @@ export class SessionListViewProvider implements vscode.WebviewViewProvider {
           break;
       }
     });
+
+    // Send cached sessions when the view first opens
+    if (this._sessions.length > 0 && this._filterState) {
+      this.updateSessions(this._sessions, this._filterState);
+    } else if (this._onRefresh) {
+      this._onRefresh();
+    }
   }
 
   updateSessions(sessions: SessionSummary[], filterState: FilterState): void {
