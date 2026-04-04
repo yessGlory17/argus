@@ -194,6 +194,7 @@ export class DiscoveryService {
         project: ds.project,
         model: ds.model,
         timestamp: ds.timestamp,
+        lastModified: ds.lastModified,
         isActive,
       });
     }

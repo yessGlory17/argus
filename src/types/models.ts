@@ -1,3 +1,24 @@
+// Filter & grouping types
+
+export type GroupMode = 'none' | 'project' | 'model';
+export type DatePreset = 'all' | '1h' | '24h' | '7d' | '30d' | 'custom';
+
+export interface FilterState {
+  searchQuery: string;
+  selectedModels: string[];
+  datePreset: DatePreset;
+  customDateFrom?: number;
+  customDateTo?: number;
+  groupMode: GroupMode;
+}
+
+export const DEFAULT_FILTER_STATE: FilterState = {
+  searchQuery: '',
+  selectedModels: [],
+  datePreset: 'all',
+  groupMode: 'none',
+};
+
 // Core data models ported from Go
 
 export interface HistoryEntry {
@@ -13,6 +34,7 @@ export interface SessionSummary {
   project: string;
   model: string;
   timestamp: Date;
+  lastModified: Date;
   isActive: boolean;
 }
 

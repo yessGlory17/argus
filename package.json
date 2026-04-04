@@ -55,6 +55,7 @@
         {
           "id": "argusSessionList",
           "name": "Sessions",
+          "type": "webview",
           "contextualTitle": "Claude Code Sessions"
         }
       ]
@@ -75,14 +76,111 @@
         "command": "argus.openSessionTab",
         "title": "Open Session Tab",
         "category": "Argus"
+      },
+      {
+        "command": "argus.clearFilters",
+        "title": "Clear All Filters",
+        "icon": "$(clear-all)",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.toggleModelOpus",
+        "title": "Toggle Opus Filter",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.toggleModelSonnet",
+        "title": "Toggle Sonnet Filter",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.toggleModelHaiku",
+        "title": "Toggle Haiku Filter",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setDateAll",
+        "title": "All Time",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setDate1h",
+        "title": "Last 1 Hour",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setDate24h",
+        "title": "Last 24 Hours",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setDate7d",
+        "title": "Last 7 Days",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setDate30d",
+        "title": "Last 30 Days",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setDateCustom",
+        "title": "Custom Range...",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setGroupNone",
+        "title": "Flat List",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setGroupProject",
+        "title": "Group by Project",
+        "category": "Argus"
+      },
+      {
+        "command": "argus.setGroupModel",
+        "title": "Group by Model",
+        "category": "Argus"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "argus.groupMenu",
+        "label": "Group Sessions",
+        "icon": "$(list-tree)"
       }
     ],
     "menus": {
       "view/title": [
         {
+          "submenu": "argus.groupMenu",
+          "when": "view == argusSessionList",
+          "group": "navigation@1"
+        },
+        {
+          "command": "argus.clearFilters",
+          "when": "view == argusSessionList && argus.hasActiveFilters",
+          "group": "navigation@2"
+        },
+        {
           "command": "argus.refreshSessions",
           "when": "view == argusSessionList",
-          "group": "navigation"
+          "group": "navigation@3"
+        }
+      ],
+      "argus.groupMenu": [
+        {
+          "command": "argus.setGroupNone",
+          "group": "group@1"
+        },
+        {
+          "command": "argus.setGroupProject",
+          "group": "group@2"
+        },
+        {
+          "command": "argus.setGroupModel",
+          "group": "group@3"
         }
       ]
     },
