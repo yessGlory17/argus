@@ -115,7 +115,12 @@ const DependencyGraph = ({ steps, filesRead, filesWritten, onGoToStep }: Props) 
       .data(graphData.links)
       .join('line')
       .attr('class', (d: GraphLink) => `link ${d.type}`)
-      .attr('stroke', (d: GraphLink) => d.type === 'read' ? '#569CD6' : '#4EC9B0')
+      .attr('stroke', (d: GraphLink) => {
+        const style = getComputedStyle(document.documentElement);
+        return d.type === 'read'
+          ? style.getPropertyValue('--status-info').trim() || '#569CD6'
+          : style.getPropertyValue('--status-success').trim() || '#4EC9B0';
+      })
       .attr('stroke-width', 1.5)
       .attr('stroke-opacity', 0.6);
 
@@ -136,10 +141,11 @@ const DependencyGraph = ({ steps, filesRead, filesWritten, onGoToStep }: Props) 
         return 10 + Math.min(count * 2, 20);
       })
       .attr('fill', (d: GraphNode) => {
-        if ((d.writeCount || 0) > 0) return '#4EC9B0';
-        return '#569CD6';
+        const style = getComputedStyle(document.documentElement);
+        if ((d.writeCount || 0) > 0) return style.getPropertyValue('--status-success').trim() || '#4EC9B0';
+        return style.getPropertyValue('--status-info').trim() || '#569CD6';
       })
-      .attr('stroke', '#1E1E1E')
+      .attr('stroke', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#1E1E1E')
       .attr('stroke-width', 2);
 
     node.append('text')
@@ -147,7 +153,7 @@ const DependencyGraph = ({ steps, filesRead, filesWritten, onGoToStep }: Props) 
       .attr('x', 0)
       .attr('y', 35)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#CCCCCC')
+      .attr('fill', getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#CCCCCC')
       .attr('font-size', '11px')
       .attr('font-family', 'JetBrains Mono, monospace');
 

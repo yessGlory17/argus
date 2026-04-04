@@ -7,39 +7,42 @@
 }
 
 :root {
-  /* VS Code Dark+ Theme Colors */
-  --bg-dark: #1E1E1E;
-  --bg-elevated: #252526;
-  --bg-panel: #2D2D30;
-  --bg-hover: #2A2D2E;
+  /* Backgrounds — mapped to VS Code theme */
+  --bg: var(--vscode-editor-background, #1E1E1E);
+  --bg-dark: var(--vscode-editor-background, #1E1E1E);
+  --bg-elevated: var(--vscode-sideBar-background, var(--vscode-editor-background, #252526));
+  --bg-panel: var(--vscode-editorWidget-background, var(--vscode-panel-background, #2D2D30));
+  --bg-hover: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.1));
 
-  --border: #3E3E42;
-  --border-focus: #007ACC;
+  /* Borders */
+  --border: var(--vscode-widget-border, var(--vscode-panel-border, #3E3E42));
+  --border-focus: var(--vscode-focusBorder, #007ACC);
 
-  --text: #CCCCCC;
-  --text-bright: #FFFFFF;
-  --text-dim: #858585;
+  /* Text */
+  --text: var(--vscode-foreground, #CCCCCC);
+  --text-bright: var(--vscode-editor-foreground, var(--vscode-foreground, #FFFFFF));
+  --text-dim: var(--vscode-descriptionForeground, #858585);
 
-  /* Status Colors (VS Code inspired) */
-  --status-success: #4EC9B0;
-  --status-warning: #CE9178;
-  --status-error: #F48771;
-  --status-info: #569CD6;
-  --accent: #007ACC;
+  /* Status Colors */
+  --status-success: var(--vscode-charts-green, #4EC9B0);
+  --status-warning: var(--vscode-editorWarning-foreground, #CE9178);
+  --status-error: var(--vscode-editorError-foreground, #F48771);
+  --status-info: var(--vscode-editorInfo-foreground, #569CD6);
+  --accent: var(--vscode-focusBorder, #007ACC);
 
   /* Syntax Highlighting */
-  --syntax-keyword: #569CD6;
-  --syntax-string: #CE9178;
-  --syntax-function: #DCDCAA;
-  --syntax-comment: #6A9955;
-  --syntax-number: #B5CEA8;
+  --syntax-keyword: var(--vscode-symbolIcon-keywordForeground, #569CD6);
+  --syntax-string: var(--vscode-symbolIcon-stringForeground, #CE9178);
+  --syntax-function: var(--vscode-symbolIcon-functionForeground, #DCDCAA);
+  --syntax-comment: var(--vscode-symbolIcon-enumeratorForeground, #6A9955);
+  --syntax-number: var(--vscode-symbolIcon-numberForeground, #B5CEA8);
 
   /* Chart Colors */
-  --chart-1: #4EC9B0;
-  --chart-2: #569CD6;
-  --chart-3: #C586C0;
-  --chart-4: #DCDCAA;
-  --chart-5: #CE9178;
+  --chart-1: var(--vscode-charts-green, #4EC9B0);
+  --chart-2: var(--vscode-charts-blue, #569CD6);
+  --chart-3: var(--vscode-charts-purple, #C586C0);
+  --chart-4: var(--vscode-charts-yellow, #DCDCAA);
+  --chart-5: var(--vscode-charts-orange, #CE9178);
 
   /* Typography */
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -51,7 +54,7 @@
 
 body {
   font-family: var(--font-display);
-  background: var(--bg-dark);
+  background: var(--bg);
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -65,22 +68,22 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: var(--vscode-scrollbarSlider-background, var(--border));
   border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+  background: var(--vscode-scrollbarSlider-hoverBackground, var(--accent));
 }
 
 /* Selection */
 ::selection {
-  background: var(--accent);
-  color: white;
+  background: var(--vscode-editor-selectionBackground, var(--accent));
+  color: var(--vscode-editor-selectionForeground, white);
 }
 
 /* Typography */

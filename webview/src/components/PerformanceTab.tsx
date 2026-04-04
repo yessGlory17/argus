@@ -91,19 +91,19 @@ const PerformanceTab = ({ steps, onGoToStep }: Props) => {
       title: {
         display: true,
         text: 'Top 10 Slowest Operations',
-        color: '#CCCCCC',
+        color: getComputedStyle(document.documentElement).getPropertyValue('--text-bright').trim() || '#CCCCCC',
         font: { size: 14 },
       },
     },
     scales: {
       y: {
         beginAtZero: true,
-        ticks: { color: '#999999' },
-        grid: { color: 'rgba(255,255,255,0.1)' },
+        ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || '#999999' },
+        grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(255,255,255,0.1)' },
       },
       x: {
-        ticks: { color: '#999999', font: { size: 10 } },
-        grid: { color: 'rgba(255,255,255,0.1)' },
+        ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || '#999999', font: { size: 10 } },
+        grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(255,255,255,0.1)' },
       },
     },
     onClick: (_event: any, elements: any[]) => {

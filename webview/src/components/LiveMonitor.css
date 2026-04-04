@@ -47,12 +47,12 @@
 
 .live-badge.active-badge {
   background: rgba(78, 201, 176, 0.2);
-  color: #4EC9B0;
+  color: var(--status-success);
 }
 
 .live-badge.inactive-badge {
   background: rgba(153, 153, 153, 0.2);
-  color: #999999;
+  color: var(--text-dim);
 }
 
 .status-dot {
@@ -152,7 +152,7 @@
 .action-tool::before {
   content: '▶';
   font-size: 10px;
-  color: #4EC9B0;
+  color: var(--status-success);
   animation: blink 1s ease-in-out infinite;
 }
 
@@ -179,6 +179,6 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #4EC9B0;
+  background: var(--status-success);
   animation: pulse 2s ease-in-out infinite;
 }

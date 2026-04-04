@@ -116,7 +116,7 @@ const CostTab = ({ steps, analysis, sessionTotalCost, onGoToStep }: Props) => {
           'rgba(197, 134, 192, 0.8)',
           'rgba(86, 156, 214, 0.6)',
         ],
-        borderColor: 'rgba(62, 62, 66, 1)',
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(62, 62, 66, 1)',
         borderWidth: 1,
       },
     ],
@@ -129,7 +129,7 @@ const CostTab = ({ steps, analysis, sessionTotalCost, onGoToStep }: Props) => {
       legend: {
         position: 'right' as const,
         labels: {
-          color: '#CCCCCC',
+          color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#CCCCCC',
           font: { size: 11 },
           padding: 10,
         },
@@ -160,7 +160,7 @@ const CostTab = ({ steps, analysis, sessionTotalCost, onGoToStep }: Props) => {
           'rgba(94, 234, 212, 0.8)',
           'rgba(251, 191, 36, 0.8)',
         ],
-        borderColor: 'rgba(62, 62, 66, 1)',
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(62, 62, 66, 1)',
         borderWidth: 1,
       },
     ],
@@ -173,7 +173,7 @@ const CostTab = ({ steps, analysis, sessionTotalCost, onGoToStep }: Props) => {
       legend: {
         position: 'bottom' as const,
         labels: {
-          color: '#CCCCCC',
+          color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#CCCCCC',
           font: { size: 11 },
           padding: 8,
         },

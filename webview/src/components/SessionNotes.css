@@ -128,7 +128,7 @@
 }
 
 .notes-add-btn:hover:not(:disabled) {
-  background: #0098ff;
+  background: var(--accent);
   transform: translateY(-1px);
 }
 
