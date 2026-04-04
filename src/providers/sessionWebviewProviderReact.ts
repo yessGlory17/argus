@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { ParserService } from '../services/parserService';
 import { AnalyzerService } from '../services/analyzerService';
 import { DiscoveryService } from '../services/discoveryService';
@@ -7,6 +8,7 @@ import { SessionDetail } from '../types/models';
 
 export class SessionWebviewProviderReact {
   private panels: Map<string, vscode.WebviewPanel> = new Map();
+  private watchers: Map<string, fs.FSWatcher> = new Map();
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -69,6 +71,7 @@ export class SessionWebviewProviderReact {
               type: 'sessionData',
               data: sessionData,
             });
+            panel.webview.postMessage({ type: 'liveMode', active: true });
             break;
         }
       },
@@ -79,8 +82,12 @@ export class SessionWebviewProviderReact {
     // Track panel
     this.panels.set(panelKey, panel);
 
+    // Start watching the JSONL file for live updates
+    this.startWatching(sessionId, panel);
+
     // Clean up when panel is closed
     panel.onDidDispose(() => {
+      this.stopWatching(sessionId);
       this.panels.delete(panelKey);
     });
   }
@@ -119,6 +126,75 @@ export class SessionWebviewProviderReact {
         </body>
       </html>
     `;
+  }
+
+  private startWatching(sessionId: string, panel: vscode.WebviewPanel): void {
+    const sessionInfo = this.discoveryService.getSessionFilePath(sessionId);
+    if (!sessionInfo) {
+      return;
+    }
+
+    let debounceTimer: NodeJS.Timeout | undefined;
+    let lastSize = 0;
+
+    try {
+      lastSize = fs.statSync(sessionInfo.filePath).size;
+    } catch {
+      // ignore
+    }
+
+    try {
+      const watcher = fs.watch(sessionInfo.filePath, async (eventType) => {
+        if (eventType !== 'change') {
+          return;
+        }
+
+        // Skip if file size hasn't changed (avoids duplicate events)
+        try {
+          const currentSize = fs.statSync(sessionInfo.filePath).size;
+          if (currentSize === lastSize) {
+            return;
+          }
+          lastSize = currentSize;
+        } catch {
+          return;
+        }
+
+        // Debounce: wait 500ms for writes to settle
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+        debounceTimer = setTimeout(async () => {
+          try {
+            const updatedData = await this.loadSessionData(sessionId);
+            if (updatedData) {
+              panel.webview.postMessage({
+                type: 'sessionData',
+                data: updatedData,
+              });
+            }
+          } catch (err) {
+            console.error('Error reloading session for live update:', err);
+          }
+        }, 500);
+      });
+
+      this.watchers.set(sessionId, watcher);
+
+      // Notify webview that live mode is active
+      panel.webview.postMessage({ type: 'liveMode', active: true });
+    } catch (err) {
+      console.error('Failed to start file watcher:', err);
+    }
+  }
+
+  private stopWatching(sessionId: string): void {
+    const watcher = this.watchers.get(sessionId);
+    if (watcher) {
+      watcher.close();
+      this.watchers.delete(sessionId);
+    }
   }
 
   private async loadSessionData(sessionId: string): Promise<SessionDetail | null> {
