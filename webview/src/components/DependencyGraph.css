@@ -49,11 +49,11 @@
 }
 
 .legend-dot.read {
-  background: #569CD6;
+  background: var(--status-info);
 }
 
 .legend-dot.write {
-  background: #4EC9B0;
+  background: var(--status-success);
 }
 
 .graph-container {

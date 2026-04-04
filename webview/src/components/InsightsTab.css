@@ -22,19 +22,19 @@
 }
 
 .insight-card.optimization {
-  border-left-color: #4EC9B0;
+  border-left-color: var(--status-success);
 }
 
 .insight-card.warning {
-  border-left-color: #CE9178;
+  border-left-color: var(--status-warning);
 }
 
 .insight-card.success {
-  border-left-color: #4EC9B0;
+  border-left-color: var(--status-success);
 }
 
 .insight-card.info {
-  border-left-color: #569CD6;
+  border-left-color: var(--status-info);
 }
 
 .insight-header {
@@ -81,7 +81,7 @@
 .savings-value {
   font-family: var(--font-code);
   font-weight: 600;
-  color: #4EC9B0;
+  color: var(--status-success);
 }
 
 .insight-steps {

@@ -187,17 +187,17 @@
 
 .result-type-badge.step {
   background: rgba(86, 156, 214, 0.2);
-  color: #569CD6;
+  color: var(--status-info);
 }
 
 .result-type-badge.finding {
   background: rgba(206, 145, 120, 0.2);
-  color: #CE9178;
+  color: var(--status-warning);
 }
 
 .result-type-badge.file {
   background: rgba(78, 201, 176, 0.2);
-  color: #4EC9B0;
+  color: var(--status-success);
 }
 
 .result-title {

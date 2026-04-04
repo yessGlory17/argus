@@ -104,7 +104,7 @@
 }
 
 .usage-bar-fill.output {
-  background: #8b5cf6;
+  background: var(--chart-3);
 }
 
 .usage-bar-fill.cache {
