@@ -18,6 +18,8 @@ function App() {
   const [activeTab, setActiveTab] = useState<Tab>('steps');
   const [loading, setLoading] = useState(true);
   const [highlightStep, setHighlightStep] = useState<number | null>(null);
+  const [isLive, setIsLive] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -25,6 +27,11 @@ function App() {
       if (message.type === 'sessionData') {
         setSession(message.data);
         setLoading(false);
+        if (isLive) {
+          setLastUpdate(new Date());
+        }
+      } else if (message.type === 'liveMode') {
+        setIsLive(message.active);
       }
     };
 
@@ -35,7 +42,7 @@ function App() {
     }
 
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [isLive]);
 
   if (loading) {
     return (
@@ -88,6 +95,7 @@ function App() {
           <span className="meta-badge">{formatModel(session.model)}</span>
           <span>{formatDuration(session.durationMs)}</span>
           <span className="meta-dim">{session.steps.length} steps</span>
+          {isLive && <span className="live-badge"><span className="live-dot"></span>LIVE</span>}
         </div>
       </div>
 
