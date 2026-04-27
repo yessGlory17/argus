@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { SessionSummary } from '../types/models';
+import { getClaudeConfigDir } from '../utils/claudePaths';
 import { ParserService } from './parserService';
 
 export interface DiscoveredSession {
@@ -27,24 +27,6 @@ interface SessionFileInfo {
   projectDir: string;
 }
 
-const SKIP_DIRS = new Set([
-  'node_modules',
-  '.git',
-  'vendor',
-  '__pycache__',
-  '.venv',
-  '.tox',
-  'dist',
-  'build',
-  'target',
-  '.cache',
-  '.npm',
-  '.cargo',
-  '.rustup',
-  '.local',
-  'snap',
-]);
-
 export class DiscoveryService {
   private sessionIndex: Map<string, DiscoveredSession> = new Map();
   private claudeDirs: string[] = [];
@@ -56,45 +38,13 @@ export class DiscoveryService {
   }
 
   /**
-   * Find all .claude directories starting from home directory
+   * Locate the user's ~/.claude directory if it has a projects/ subdirectory.
+   * We intentionally do not scan the rest of the filesystem: it's slow and can
+   * make the extension look like it's snooping on user files.
    */
-  async findClaudeDirs(maxDepth: number = 5): Promise<string[]> {
-    const homeDir = os.homedir();
-    const claudeDirs: string[] = [];
-    const seen = new Set<string>();
-
-    // Always include ~/.claude if it has projects/
-    const mainClaudeDir = path.join(homeDir, '.claude');
-    if (this.hasProjectsDir(mainClaudeDir)) {
-      claudeDirs.push(mainClaudeDir);
-      seen.add(mainClaudeDir);
-    }
-
-    const homeDepth = homeDir.split(path.sep).length;
-
-    await this.walkDir(homeDir, homeDepth, maxDepth, (dirPath, isDir, name) => {
-      if (!isDir) {
-        return true; // continue
-      }
-
-      // Skip known heavy directories
-      if (SKIP_DIRS.has(name)) {
-        return false; // skip this directory
-      }
-
-      // Check if this is a .claude directory with projects/
-      if (name === '.claude' && !seen.has(dirPath)) {
-        if (this.hasProjectsDir(dirPath)) {
-          claudeDirs.push(dirPath);
-          seen.add(dirPath);
-        }
-        return false; // don't descend into .claude/
-      }
-
-      return true; // continue walking
-    });
-
-    return claudeDirs;
+  async findClaudeDirs(): Promise<string[]> {
+    const mainClaudeDir = getClaudeConfigDir();
+    return this.hasProjectsDir(mainClaudeDir) ? [mainClaudeDir] : [];
   }
 
   /**
@@ -138,9 +88,9 @@ export class DiscoveryService {
   /**
    * Discover all sessions from all .claude directories
    */
-  async discoverAllSessions(maxDepth: number = 5): Promise<DiscoveryResult> {
+  async discoverAllSessions(): Promise<DiscoveryResult> {
     // Step 1: Find all .claude directories
-    const claudeDirs = await this.findClaudeDirs(maxDepth);
+    const claudeDirs = await this.findClaudeDirs();
 
     // Step 2: Scan all projects directories
     const allFiles = new Map<string, SessionFileInfo>();
@@ -253,40 +203,13 @@ export class DiscoveryService {
     }
   }
 
-  private async walkDir(
-    dir: string,
-    homeDepth: number,
-    maxDepth: number,
-    callback: (dirPath: string, isDir: boolean, name: string) => boolean
-  ): Promise<void> {
-    const depth = dir.split(path.sep).length - homeDepth;
-    if (depth > maxDepth) {
-      return;
-    }
-
-    try {
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name);
-        const shouldContinue = callback(fullPath, entry.isDirectory(), entry.name);
-
-        if (entry.isDirectory() && shouldContinue) {
-          await this.walkDir(fullPath, homeDepth, maxDepth, callback);
-        }
-      }
-    } catch (err) {
-      // Permission denied or other errors, skip
-    }
-  }
-
   private async processMetadataConcurrently(
     files: Map<string, SessionFileInfo>,
     historyMap: Map<string, any>
   ): Promise<DiscoveredSession[]> {
     const sessions: DiscoveredSession[] = [];
 
-    for (const [sessionId, info] of files) {
+    for (const info of files.values()) {
       const session = await this.processSessionFile(info, historyMap);
       if (session) {
         sessions.push(session);
@@ -376,7 +299,7 @@ export class DiscoveryService {
 
   private projectNameFromDir(dirPath: string): string {
     const base = path.basename(dirPath);
-    const parts = base.split('-').filter(p => p);
+    const parts = base.split('-').filter((p: string) => p);
 
     if (parts.length === 0) {
       return base;

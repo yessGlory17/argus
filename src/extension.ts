@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { DiscoveryService } from './services/discoveryService';
 import { ParserService } from './services/parserService';
@@ -6,6 +7,7 @@ import { SessionWebviewProviderReact } from './providers/sessionWebviewProviderR
 import { SessionListViewProvider } from './providers/sessionListViewProvider';
 import { DatePickerPanel } from './providers/datePickerPanel';
 import { FilterState, DEFAULT_FILTER_STATE, GroupMode, DatePreset, SessionSummary } from './types/models';
+import { getClaudeConfigDir } from './utils/claudePaths';
 
 export function activate(context: vscode.ExtensionContext) {
   // Initialize services
@@ -87,6 +89,26 @@ export function activate(context: vscode.ExtensionContext) {
     listViewProvider.updateSessions(filtered, filterState);
   }
 
+  // Coalesce concurrent discovery requests so the view-open path and the
+  // activation path don't both walk ~/.claude at the same time.
+  let discoveryPromise: Promise<void> | null = null;
+
+  function ensureSessions(): Promise<void> {
+    if (discoveryPromise) {
+      return discoveryPromise;
+    }
+    discoveryPromise = (async () => {
+      try {
+        await discoveryService.refreshDiscovery();
+        allSessions = await discoveryService.getSessionList();
+        refreshList();
+      } finally {
+        discoveryPromise = null;
+      }
+    })();
+    return discoveryPromise;
+  }
+
   function syncContextKeys() {
     const models = filterState.selectedModels;
     vscode.commands.executeCommand('setContext', 'argus.filter.opus', models.includes('opus'));
@@ -163,7 +185,9 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  listViewProvider.setRefreshCallback(() => refreshList());
+  // When the view is first opened with no cached data, run a real discovery
+  // instead of just re-filtering an empty list.
+  listViewProvider.setRefreshCallback(() => { void ensureSessions(); });
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(SessionListViewProvider.viewId, listViewProvider, {
@@ -249,14 +273,18 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('argus.setGroupModel', () => setGroupMode('model'))
   );
 
-  // Initial discovery
-  discoveryService.refreshDiscovery().then(async () => {
-    allSessions = await discoveryService.getSessionList();
-    refreshList();
-  });
+  // Initial discovery — fire and forget; ensureSessions dedupes against the
+  // view-open path if the user clicks Argus before this finishes.
+  void ensureSessions();
 
-  // Watch for .claude directory changes
-  const watcher = vscode.workspace.createFileSystemWatcher('**/.claude/projects/**/*.jsonl');
+  // Watch for session file changes under the user's Claude config directory.
+  // Use an absolute RelativePattern so the watcher fires regardless of which
+  // folder is open in VS Code (workspace-relative globs would only match
+  // files inside the workspace).
+  const projectsDir = path.join(getClaudeConfigDir(), 'projects');
+  const watcher = vscode.workspace.createFileSystemWatcher(
+    new vscode.RelativePattern(vscode.Uri.file(projectsDir), '**/*.jsonl')
+  );
 
   watcher.onDidCreate(async () => {
     await discoveryService.refreshDiscovery();

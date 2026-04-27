@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import * as readline from 'readline';
 import { RawEvent } from '../types/parser';
 import { HistoryEntry, SessionDetail, Step, SubagentInfo } from '../types/models';
+import { getClaudeConfigDir } from '../utils/claudePaths';
 
 interface QuickMetadata {
   model: string;
@@ -131,7 +131,7 @@ export class ParserService {
    */
   async readHistoryMap(): Promise<Map<string, HistoryEntry>> {
     const historyMap = new Map<string, HistoryEntry>();
-    const historyPath = path.join(os.homedir(), '.claude', 'history.jsonl');
+    const historyPath = path.join(getClaudeConfigDir(), 'history.jsonl');
 
     if (!fs.existsSync(historyPath)) {
       return historyMap;
