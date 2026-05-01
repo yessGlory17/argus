@@ -2,7 +2,7 @@
 
 <br/>
 
-<img src="icon-256px.png" alt="Argus Logo" width="120" height="120"/>
+<img src="icon-128.png" alt="Argus Logo" width="160" height="160"/>
 
 <br/>
 
