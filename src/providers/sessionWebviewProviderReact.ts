@@ -61,6 +61,9 @@ export class SessionWebviewProviderReact {
       data: sessionData,
     });
 
+    // Send top-level directory listing for the session cwd
+    this.sendDirectoryTree(panel, sessionData.project);
+
     // Handle messages from webview
     panel.webview.onDidReceiveMessage(
       async (message) => {
@@ -72,6 +75,7 @@ export class SessionWebviewProviderReact {
               data: sessionData,
             });
             panel.webview.postMessage({ type: 'liveMode', active: true });
+            this.sendDirectoryTree(panel, sessionData.project);
             break;
         }
       },
@@ -186,6 +190,35 @@ export class SessionWebviewProviderReact {
       panel.webview.postMessage({ type: 'liveMode', active: true });
     } catch (err) {
       console.error('Failed to start file watcher:', err);
+    }
+  }
+
+  private sendDirectoryTree(panel: vscode.WebviewPanel, cwd: string): void {
+    if (!cwd) {
+      return;
+    }
+    try {
+      if (!fs.existsSync(cwd) || !fs.statSync(cwd).isDirectory()) {
+        return;
+      }
+      const entries = fs.readdirSync(cwd, { withFileTypes: true })
+        .filter((e) => !e.name.startsWith('.'))
+        .map((e) => ({
+          name: e.name,
+          type: e.isDirectory() ? 'dir' : 'file',
+        }))
+        .sort((a, b) => {
+          if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+
+      panel.webview.postMessage({
+        type: 'directoryTree',
+        cwd,
+        entries,
+      });
+    } catch (err) {
+      console.error('Failed to read directory tree:', err);
     }
   }
 

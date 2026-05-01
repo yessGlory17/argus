@@ -7,11 +7,12 @@ import FlowTab from './components/FlowTab';
 import ContextTab from './components/ContextTab';
 import PerformanceTab from './components/PerformanceTab';
 import InsightsTab from './components/InsightsTab';
+import MapTab, { DirEntry } from './components/MapTab';
 import SessionNotes from './components/SessionNotes';
 import './styles/global.css';
 import './styles/App.css';
 
-type Tab = 'steps' | 'analysis' | 'cost' | 'flow' | 'context' | 'performance' | 'insights';
+type Tab = 'steps' | 'analysis' | 'cost' | 'flow' | 'map' | 'context' | 'performance' | 'insights';
 
 function App() {
   const [session, setSession] = useState<SessionDetail | null>(null);
@@ -20,6 +21,8 @@ function App() {
   const [highlightStep, setHighlightStep] = useState<number | null>(null);
   const [isLive, setIsLive] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [mapCwd, setMapCwd] = useState<string>('');
+  const [mapEntries, setMapEntries] = useState<DirEntry[]>([]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -32,6 +35,9 @@ function App() {
         }
       } else if (message.type === 'liveMode') {
         setIsLive(message.active);
+      } else if (message.type === 'directoryTree') {
+        setMapCwd(message.cwd || '');
+        setMapEntries(Array.isArray(message.entries) ? message.entries : []);
       }
     };
 
@@ -125,6 +131,12 @@ function App() {
           Flow
         </button>
         <button
+          className={`tab ${activeTab === 'map' ? 'active' : ''}`}
+          onClick={() => setActiveTab('map')}
+        >
+          Map
+        </button>
+        <button
           className={`tab ${activeTab === 'context' ? 'active' : ''}`}
           onClick={() => setActiveTab('context')}
         >
@@ -172,6 +184,14 @@ function App() {
         {activeTab === 'flow' && (
           <FlowTab
             steps={session.steps}
+            onGoToStep={goToStep}
+          />
+        )}
+        {activeTab === 'map' && (
+          <MapTab
+            steps={session.steps}
+            cwd={mapCwd || session.project}
+            topLevelEntries={mapEntries}
             onGoToStep={goToStep}
           />
         )}
