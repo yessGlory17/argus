@@ -303,10 +303,19 @@ export class ParserService {
   }
 
   /**
-   * Parse subagent files
+   * Resolve the directory Claude Code writes sub-agent JSONLs into for a given
+   * session. Layout is `<projectDir>/<sessionId>/subagents/`.
+   */
+  getSubagentsDir(projectDir: string, sessionId: string): string {
+    return path.join(projectDir, sessionId, 'subagents');
+  }
+
+  /**
+   * Parse all sub-agent JSONLs for a session. Each agent's steps are tagged
+   * with its agentId so they can be threaded into the parent session timeline.
    */
   async parseSubagents(projectDir: string, sessionId: string): Promise<SubagentInfo[]> {
-    const subagentsDir = path.join(projectDir, 'subagents', sessionId);
+    const subagentsDir = this.getSubagentsDir(projectDir, sessionId);
 
     if (!fs.existsSync(subagentsDir)) {
       return [];
@@ -322,7 +331,10 @@ export class ParserService {
           continue;
         }
 
-        const agentId = file.replace('.jsonl', '');
+        // Filenames carry an `agent-` prefix that the JSONL contents and the
+        // spawning tool's `toolUseResult.agentId` do not. Strip it so the
+        // canonical id matches across all three sources.
+        const agentId = file.replace(/^agent-/, '').replace(/\.jsonl$/, '');
         const filePath = path.join(subagentsDir, file);
         const events = await this.parseFile(filePath);
 
@@ -341,10 +353,40 @@ export class ParserService {
 
         const session = this.buildSession(events, agentId, prompt, '');
 
+        // Tag every step with its owning agentId so the flatten helper and
+        // downstream tabs can distinguish agent activity from main session.
+        for (const step of session.steps) {
+          step.agentId = agentId;
+        }
+
+        // meta.json is written next to the JSONL with agentType + description.
+        // The file keeps the `agent-` prefix even though the canonical id we
+        // store internally does not.
+        let agentType: string | undefined;
+        let description: string | undefined;
+        const metaPath = path.join(subagentsDir, `agent-${agentId}.meta.json`);
+        if (fs.existsSync(metaPath)) {
+          try {
+            const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+            agentType = typeof meta.agentType === 'string' ? meta.agentType : undefined;
+            description = typeof meta.description === 'string' ? meta.description : undefined;
+          } catch {
+            // ignore malformed meta
+          }
+        }
+
         subagents.push({
           agentId,
           prompt,
           model: session.model,
+          agentType,
+          description,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          durationMs: session.durationMs,
+          filesRead: session.filesRead,
+          filesWritten: session.filesWritten,
+          toolsUsed: session.toolsUsed,
           stepCount: session.steps.length,
           totalCost: session.totalCost,
           steps: session.steps,
@@ -355,6 +397,33 @@ export class ParserService {
     }
 
     return subagents;
+  }
+
+  /**
+   * Walk the main session steps, find agent-spawning tool_use calls whose
+   * result carries an `agentId`, and link the matching SubagentInfo back to
+   * the spawning step via `parentStepIndex`. Different Claude Code versions
+   * have used both "Task" and "Agent" as the tool name for the same launch
+   * primitive — we match either.
+   */
+  linkSubagentsToParents(steps: Step[], subagents: SubagentInfo[]): void {
+    if (subagents.length === 0) return;
+    const byId = new Map<string, SubagentInfo>();
+    for (const s of subagents) byId.set(s.agentId, s);
+
+    for (const step of steps) {
+      if (step.toolName !== 'Task' && step.toolName !== 'Agent') continue;
+      if (!step.toolResult) continue;
+      try {
+        const result = JSON.parse(step.toolResult);
+        const agentId = result?.agentId;
+        if (typeof agentId !== 'string') continue;
+        const sub = byId.get(agentId);
+        if (sub) sub.parentStepIndex = step.index;
+      } catch {
+        // ignore unparseable results
+      }
+    }
   }
 
   // Helper methods

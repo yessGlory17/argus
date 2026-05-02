@@ -6,20 +6,27 @@ interface Props {
   onGoToStep: (index: number) => void;
 }
 
+interface OpRef {
+  stepIndex: number;
+  agentId?: string;
+}
+
 const FlowTab = ({ steps, onGoToStep }: Props) => {
-  // Build file dependency graph
-  const fileOps = new Map<string, { reads: number[]; writes: number[] }>();
+  // Build file dependency graph. Steps may include sub-agent activity (flat
+  // list); we still group per file but tag each op with the agent that did it.
+  const fileOps = new Map<string, { reads: OpRef[]; writes: OpRef[]; agentIds: Set<string> }>();
 
   steps.forEach(step => {
-    if (step.toolName === 'Read' && step.toolInput?.file_path) {
-      const path = step.toolInput.file_path;
-      if (!fileOps.has(path)) fileOps.set(path, { reads: [], writes: [] });
-      fileOps.get(path)!.reads.push(step.index);
-    }
-    if ((step.toolName === 'Write' || step.toolName === 'Edit') && step.toolInput?.file_path) {
-      const path = step.toolInput.file_path;
-      if (!fileOps.has(path)) fileOps.set(path, { reads: [], writes: [] });
-      fileOps.get(path)!.writes.push(step.index);
+    const fp: string | undefined = step.toolInput?.file_path;
+    if (!fp) return;
+    const ref: OpRef = { stepIndex: step.globalIndex ?? step.index, agentId: step.agentId };
+    if (!fileOps.has(fp)) fileOps.set(fp, { reads: [], writes: [], agentIds: new Set() });
+    const bucket = fileOps.get(fp)!;
+    if (step.agentId) bucket.agentIds.add(step.agentId);
+    if (step.toolName === 'Read') {
+      bucket.reads.push(ref);
+    } else if (step.toolName === 'Write' || step.toolName === 'Edit') {
+      bucket.writes.push(ref);
     }
   });
 
@@ -72,19 +79,29 @@ const FlowTab = ({ steps, onGoToStep }: Props) => {
         ) : (
           <div className="file-list">
             {sortedFiles.map(([path, ops]) => (
-              <div key={path} className="file-node">
+              <div key={path} className={`file-node${ops.agentIds.size > 0 ? ' file-node-agent' : ''}`}>
                 <div className="file-path" title={path}>
                   <code>{path.split('/').pop()}</code>
                   <span className="file-full-path">{path}</span>
+                  {ops.agentIds.size > 0 && (
+                    <span className="file-agent-badge" title={`${ops.agentIds.size} sub-agent${ops.agentIds.size > 1 ? 's' : ''} touched this file`}>
+                      A×{ops.agentIds.size}
+                    </span>
+                  )}
                 </div>
                 <div className="file-ops">
                   {ops.reads.length > 0 && (
                     <div className="op-group read">
                       <span className="op-label">Read ({ops.reads.length}x)</span>
                       <div className="op-steps">
-                        {ops.reads.slice(0, 8).map(idx => (
-                          <button key={idx} className="step-link" onClick={() => onGoToStep(idx)}>
-                            #{idx}
+                        {ops.reads.slice(0, 8).map(ref => (
+                          <button
+                            key={ref.stepIndex}
+                            className={`step-link${ref.agentId ? ' step-link-agent' : ''}`}
+                            onClick={() => onGoToStep(ref.stepIndex)}
+                            title={ref.agentId ? `agent ${ref.agentId.slice(0, 12)}` : undefined}
+                          >
+                            #{ref.stepIndex}
                           </button>
                         ))}
                         {ops.reads.length > 8 && <span>+{ops.reads.length - 8}</span>}
@@ -95,9 +112,14 @@ const FlowTab = ({ steps, onGoToStep }: Props) => {
                     <div className="op-group write">
                       <span className="op-label">Write ({ops.writes.length}x)</span>
                       <div className="op-steps">
-                        {ops.writes.slice(0, 8).map(idx => (
-                          <button key={idx} className="step-link" onClick={() => onGoToStep(idx)}>
-                            #{idx}
+                        {ops.writes.slice(0, 8).map(ref => (
+                          <button
+                            key={ref.stepIndex}
+                            className={`step-link${ref.agentId ? ' step-link-agent' : ''}`}
+                            onClick={() => onGoToStep(ref.stepIndex)}
+                            title={ref.agentId ? `agent ${ref.agentId.slice(0, 12)}` : undefined}
+                          >
+                            #{ref.stepIndex}
                           </button>
                         ))}
                         {ops.writes.length > 8 && <span>+{ops.writes.length - 8}</span>}

@@ -26,6 +26,7 @@ interface TreeNode {
   revealedAt: number;
   readCount: number;
   writeCount: number;
+  agentTouched: boolean;
   children?: TreeNode[];
 }
 
@@ -33,6 +34,7 @@ interface StepEvent {
   path: string;
   kind: 'read' | 'write';
   stepIndex: number;
+  agentId?: string;
 }
 
 const NODE_W = 210;
@@ -103,10 +105,11 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
       rel = rel.replace(/\\/g, '/').replace(/^\.\/+/, '');
       if (!rel) continue;
       const tn = step.toolName;
+      const stepIndex = step.globalIndex ?? step.index;
       if (tn === 'Read') {
-        out.push({ path: rel, kind: 'read', stepIndex: step.index });
+        out.push({ path: rel, kind: 'read', stepIndex, agentId: step.agentId });
       } else if (tn === 'Write' || tn === 'Edit' || tn === 'MultiEdit') {
-        out.push({ path: rel, kind: 'write', stepIndex: step.index });
+        out.push({ path: rel, kind: 'write', stepIndex, agentId: step.agentId });
       }
     }
     return out;
@@ -123,6 +126,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
       revealedAt: -1,
       readCount: 0,
       writeCount: 0,
+      agentTouched: false,
       children: [],
     };
     const map = new Map<string, TreeNode>();
@@ -140,6 +144,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
         revealedAt: -1,
         readCount: 0,
         writeCount: 0,
+        agentTouched: false,
         children: [],
       };
       rootNode.children!.push(n);
@@ -170,6 +175,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
             revealedAt: ev.stepIndex,
             readCount: 0,
             writeCount: 0,
+            agentTouched: false,
             children: isLast ? undefined : [],
           };
           parent.children.push(node);
@@ -184,6 +190,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
             node.status = 'written';
           }
           if (node.revealedAt < 0) node.revealedAt = ev.stepIndex;
+          if (ev.agentId) node.agentTouched = true;
           lastPath = acc;
         }
       }
@@ -322,6 +329,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
           intensity ? `map-node-intensity-${intensity}` : '',
           isFresh ? 'map-node-fresh' : '',
           clickable ? 'map-node-clickable' : '',
+          data.agentTouched ? 'map-node-agent' : '',
         ]
           .filter(Boolean)
           .join(' ');
@@ -402,11 +410,51 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
       const lines = [data.path || data.name];
       if (data.readCount) lines.push(`Reads: ${data.readCount}`);
       if (data.writeCount) lines.push(`Writes: ${data.writeCount}`);
+      if (data.agentTouched) lines.push('Touched by sub-agent');
       if (data.revealedAt >= 0) {
         lines.push(`Click → step #${data.revealedAt}`);
       }
       return lines.join('\n');
     });
+
+    // Sub-agent touched nodes get two affordances:
+    //   1. A thin coloured ribbon inset at the rect's left edge — visible
+    //      regardless of read/write intensity since it sits on top of the
+    //      filled background.
+    //   2. A compact rounded "agent" pill at the upper-right corner so the
+    //      label is unambiguous even at distance.
+    const agentNodes = nodes.filter((d) => d.data.agentTouched);
+
+    agentNodes
+      .append('rect')
+      .attr('class', 'map-node-agent-ribbon')
+      .attr('x', -NODE_W / 2 + 2)
+      .attr('y', -NODE_H / 2 + 4)
+      .attr('width', 3)
+      .attr('height', NODE_H - 8)
+      .attr('rx', 1.5)
+      .attr('ry', 1.5);
+
+    const agentPill = agentNodes
+      .append('g')
+      .attr('class', 'map-node-agent-pill')
+      .attr('transform', `translate(${NODE_W / 2 - 26},${-NODE_H / 2 - 7})`);
+
+    agentPill
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', 30)
+      .attr('height', 14)
+      .attr('rx', 7)
+      .attr('ry', 7);
+
+    agentPill
+      .append('text')
+      .attr('x', 15)
+      .attr('y', 10)
+      .attr('text-anchor', 'middle')
+      .text('agent');
 
     // Camera: auto-pan to last revealed node, otherwise fit
     const lastNode = root3.descendants().find((d) => d.data.path === lastRevealedPath);
@@ -553,6 +601,9 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
           </span>
           <span className="map-legend-item">
             <span className="map-legend-dot written" /> written
+          </span>
+          <span className="map-legend-item">
+            <span className="map-legend-dot agent" /> sub-agent
           </span>
         </div>
       </div>

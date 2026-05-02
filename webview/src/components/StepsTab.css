@@ -539,3 +539,91 @@
   padding: 2px 6px;
   border-radius: 3px;
 }
+
+/* Sub-agent steps — git-graph-style connector tree.
+   The line is owned entirely by the agent rows: the first row anchors the
+   guide at its own top edge, each subsequent row continues it, and the last
+   row terminates with an "└" corner.
+     ::before  — vertical line spanning above/below based on first/last
+     ::after   — short horizontal "branch" at the row's vertical center,
+                 leading from the guide to the icon.
+   A 5px left indent (padding shift) breathes the whole tree away from the
+   list's left edge. */
+.step-item-agent .step-header {
+  padding-left: 41px;
+  position: relative;
+}
+
+.step-item-agent .step-header::before {
+  content: '';
+  position: absolute;
+  left: 23px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--status-warning, #d4a72c);
+  opacity: 0.7;
+}
+
+.step-item-agent .step-header::after {
+  content: '';
+  position: absolute;
+  left: 25px;
+  top: 50%;
+  width: 12px;
+  height: 2px;
+  background: var(--status-warning, #d4a72c);
+  opacity: 0.7;
+  transform: translateY(-1px);
+  border-radius: 1px;
+}
+
+/* Last row of a run: vertical line terminates at the row's vertical center
+   forming the closing "└" corner with the horizontal branch. */
+.step-item-agent.step-agent-last .step-header::before {
+  bottom: 50%;
+}
+
+/* Single-row run — both first and last. Only the horizontal stub remains. */
+.step-item-agent.step-agent-first.step-agent-last .step-header::before {
+  display: none;
+}
+
+/* Sub-agent step rows are inset 5px from the main session rows so the agent
+   activity reads as a nested sub-tree, with its own connector line owned
+   entirely by the agent rows (no spawn stub from the Task above). */
+.step-item.step-item-agent {
+  margin-left: 5px;
+}
+
+.step-agent-badge {
+  margin-left: 8px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  border-radius: 3px;
+  color: var(--status-warning, #d4a72c);
+  background: rgba(212, 167, 44, 0.12);
+}
+
+.step-task-toggle {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 3px;
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  background: transparent;
+  color: var(--status-warning, #d4a72c);
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+
+.step-task-toggle:hover {
+  background: rgba(212, 167, 44, 0.08);
+}
+
+.step-task-toggle.collapsed {
+  opacity: 0.7;
+}

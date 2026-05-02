@@ -114,3 +114,24 @@
   text-align: center;
   color: var(--text-dim);
 }
+
+/* Sub-agent activity */
+.file-node-agent {
+  border-left: 2px solid var(--status-warning, #d4a72c);
+}
+
+.file-agent-badge {
+  margin-left: 8px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 3px;
+  color: var(--status-warning, #d4a72c);
+  background: rgba(212, 167, 44, 0.12);
+  letter-spacing: 0.4px;
+}
+
+.step-link-agent {
+  border-color: var(--status-warning, #d4a72c) !important;
+  color: var(--status-warning, #d4a72c) !important;
+}

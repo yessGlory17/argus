@@ -26,6 +26,8 @@ export interface Step {
   timestamp?: string;
   cost: number;
   usage?: TokenUsage;
+  agentId?: string;
+  globalIndex?: number;
 }
 
 export interface TokenUsage {
@@ -39,10 +41,55 @@ export interface Subagent {
   agentId: string;
   prompt: string;
   model: string;
+  agentType?: string;
+  description?: string;
+  parentStepIndex?: number;
+  startTime?: string;
+  endTime?: string;
+  durationMs?: number;
+  filesRead?: string[];
+  filesWritten?: string[];
+  toolsUsed?: Record<string, number>;
   stepCount: number;
   totalCost: number;
   steps: Step[];
   analysis?: AnalysisResult;
+}
+
+/**
+ * Build a chronologically interleaved list of main + sub-agent steps. Each
+ * agent's steps follow the Task step that spawned them, and every step gets a
+ * stable `globalIndex` for cross-tab navigation.
+ */
+export function flattenSessionSteps(session: SessionDetail): Step[] {
+  const spawnedAt = new Map<number, Subagent[]>();
+  for (const sub of session.subagents) {
+    if (typeof sub.parentStepIndex === 'number') {
+      const arr = spawnedAt.get(sub.parentStepIndex) ?? [];
+      arr.push(sub);
+      spawnedAt.set(sub.parentStepIndex, arr);
+    }
+  }
+
+  const out: Step[] = [];
+  const push = (s: Step, agentId?: string) => {
+    out.push({ ...s, agentId: agentId ?? s.agentId, globalIndex: out.length });
+  };
+
+  for (const main of session.steps) {
+    push(main);
+    const subs = spawnedAt.get(main.index);
+    if (!subs) continue;
+    for (const sub of subs) {
+      for (const sStep of sub.steps) push(sStep, sub.agentId);
+    }
+  }
+  for (const sub of session.subagents) {
+    if (typeof sub.parentStepIndex !== 'number') {
+      for (const sStep of sub.steps) push(sStep, sub.agentId);
+    }
+  }
+  return out;
 }
 
 export interface AnalysisResult {

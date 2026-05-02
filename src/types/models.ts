@@ -81,6 +81,7 @@ export interface Step {
   usage?: Usage;
   cost: number;
   agentId?: string;
+  globalIndex?: number;
 }
 
 export interface Usage {
@@ -94,10 +95,64 @@ export interface SubagentInfo {
   agentId: string;
   prompt: string;
   model: string;
+  agentType?: string;
+  description?: string;
+  parentStepIndex?: number;
+  startTime?: Date;
+  endTime?: Date;
+  durationMs?: number;
+  filesRead?: string[];
+  filesWritten?: string[];
+  toolsUsed?: Record<string, number>;
   stepCount: number;
   totalCost: number;
   steps: Step[];
   analysis?: AnalysisResult;
+}
+
+/**
+ * Build a single chronological step list combining the main session and any
+ * sub-agents. Each agent's steps are inserted right after the Task tool_use
+ * that spawned them. `globalIndex` is assigned in iteration order so callers
+ * have a stable, unique identifier for navigation/highlighting.
+ */
+export function flattenSessionSteps(session: SessionDetail): Step[] {
+  const spawnedAt = new Map<number, SubagentInfo[]>();
+  for (const sub of session.subagents) {
+    if (typeof sub.parentStepIndex === 'number') {
+      const arr = spawnedAt.get(sub.parentStepIndex) ?? [];
+      arr.push(sub);
+      spawnedAt.set(sub.parentStepIndex, arr);
+    }
+  }
+
+  const out: Step[] = [];
+  const push = (s: Step, agentId?: string) => {
+    out.push({ ...s, agentId: agentId ?? s.agentId, globalIndex: out.length });
+  };
+
+  for (const main of session.steps) {
+    push(main);
+    const subs = spawnedAt.get(main.index);
+    if (!subs) continue;
+    for (const sub of subs) {
+      for (const sStep of sub.steps) {
+        push(sStep, sub.agentId);
+      }
+    }
+  }
+
+  // Orphan agents (no resolvable parent step) — append at the tail so they
+  // remain visible rather than disappearing entirely.
+  for (const sub of session.subagents) {
+    if (typeof sub.parentStepIndex !== 'number') {
+      for (const sStep of sub.steps) {
+        push(sStep, sub.agentId);
+      }
+    }
+  }
+
+  return out;
 }
 
 export interface AnalysisResult {

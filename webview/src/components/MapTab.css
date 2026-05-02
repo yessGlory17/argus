@@ -452,6 +452,11 @@
   border-color: var(--status-success);
 }
 
+.map-legend-dot.agent {
+  background: var(--status-warning, #d4a72c);
+  border-color: var(--status-warning, #d4a72c);
+}
+
 /* Bottom stats */
 .map-stats {
   display: flex;
@@ -517,4 +522,43 @@
   margin: 0;
   font-size: 13px;
   color: var(--text);
+}
+
+/* Sub-agent touched nodes — left ribbon + top-right pill so the marker is
+   visible across read/write intensity ramps. The rect's own stroke/fill
+   stays fully driven by the read/write status, so the ribbon never fights
+   with the primary signal. */
+.map-node-agent-ribbon {
+  fill: var(--status-warning, #d4a72c);
+  stroke: none;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+.map-node-agent-pill {
+  pointer-events: none;
+}
+
+.map-node-agent-pill rect {
+  fill: var(--status-warning, #d4a72c);
+  stroke: var(--bg-elevated);
+  stroke-width: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+.map-node-agent-pill text {
+  fill: var(--bg, #1a1a1a);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-family: var(--font-code), monospace;
+  user-select: none;
+}
+
+/* Lift agent-touched read/write nodes' label intensity slightly so they
+   read distinctly from non-agent counterparts, without over-saturating. */
+.map-node-agent.map-node-read .map-node-rect,
+.map-node-agent.map-node-written .map-node-rect {
+  stroke-width: 1.8;
 }

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { SessionDetail } from './types/session';
+import { useState, useEffect, useMemo } from 'react';
+import { SessionDetail, flattenSessionSteps } from './types/session';
 import StepsTab from './components/StepsTab';
 import AnalysisTab from './components/AnalysisTab';
 import CostTab from './components/CostTab';
@@ -50,6 +50,13 @@ function App() {
     return () => window.removeEventListener('message', handleMessage);
   }, [isLive]);
 
+  // Hooks must run unconditionally on every render (Rules of Hooks). Compute
+  // the flattened timeline before any early returns.
+  const flatSteps = useMemo(
+    () => (session ? flattenSessionSteps(session) : []),
+    [session]
+  );
+
   if (loading) {
     return (
       <div className="loading">
@@ -67,8 +74,14 @@ function App() {
     );
   }
 
-  const findingCount = session.analysis?.findings?.length ?? 0;
-  const totalCost = session.analysis?.totalCost ?? session.totalCost ?? 0;
+  const agentFindingCount = session.subagents.reduce(
+    (acc, s) => acc + (s.analysis?.findings?.length ?? 0),
+    0
+  );
+  const findingCount = (session.analysis?.findings?.length ?? 0) + agentFindingCount;
+  const agentSubCost = session.subagents.reduce((acc, s) => acc + (s.totalCost || 0), 0);
+  const totalCost =
+    (session.analysis?.totalCost ?? session.totalCost ?? 0) + agentSubCost;
 
   const goToStep = (stepIndex: number) => {
     setActiveTab('steps');
@@ -100,7 +113,10 @@ function App() {
           <span>{session.project}</span>
           <span className="meta-badge">{formatModel(session.model)}</span>
           <span>{formatDuration(session.durationMs)}</span>
-          <span className="meta-dim">{session.steps.length} steps</span>
+          <span className="meta-dim">
+            {flatSteps.length} steps
+            {session.subagents.length > 0 && ` · ${session.subagents.length} agents`}
+          </span>
           {isLive && <span className="live-badge"><span className="live-dot"></span>LIVE</span>}
         </div>
       </div>
@@ -110,7 +126,7 @@ function App() {
           className={`tab ${activeTab === 'steps' ? 'active' : ''}`}
           onClick={() => setActiveTab('steps')}
         >
-          Steps ({session.steps.length})
+          Steps ({flatSteps.length})
         </button>
         <button
           className={`tab ${activeTab === 'analysis' ? 'active' : ''}`}
@@ -159,7 +175,7 @@ function App() {
       <div className="tab-content">
         {activeTab === 'steps' && (
           <StepsTab
-            steps={session.steps}
+            steps={flatSteps}
             subagents={session.subagents}
             findings={session.analysis?.findings || []}
             highlightStep={highlightStep}
@@ -169,6 +185,8 @@ function App() {
           <AnalysisTab
             analysis={session.analysis}
             steps={session.steps}
+            subagents={session.subagents}
+            flatSteps={flatSteps}
             sessionTotalCost={session.totalCost}
             onGoToStep={goToStep}
           />
@@ -183,13 +201,13 @@ function App() {
         )}
         {activeTab === 'flow' && (
           <FlowTab
-            steps={session.steps}
+            steps={flatSteps}
             onGoToStep={goToStep}
           />
         )}
         {activeTab === 'map' && (
           <MapTab
-            steps={session.steps}
+            steps={flatSteps}
             cwd={mapCwd || session.project}
             topLevelEntries={mapEntries}
             onGoToStep={goToStep}
