@@ -9,6 +9,7 @@ import { SessionDetail } from '../types/models';
 export class SessionWebviewProviderReact {
   private panels: Map<string, vscode.WebviewPanel> = new Map();
   private watchers: Map<string, fs.FSWatcher> = new Map();
+  private subagentWatchers: Map<string, fs.FSWatcher> = new Map();
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -61,6 +62,9 @@ export class SessionWebviewProviderReact {
       data: sessionData,
     });
 
+    // Send top-level directory listing for the session cwd
+    this.sendDirectoryTree(panel, sessionData.project);
+
     // Handle messages from webview
     panel.webview.onDidReceiveMessage(
       async (message) => {
@@ -72,6 +76,7 @@ export class SessionWebviewProviderReact {
               data: sessionData,
             });
             panel.webview.postMessage({ type: 'liveMode', active: true });
+            this.sendDirectoryTree(panel, sessionData.project);
             break;
         }
       },
@@ -143,6 +148,47 @@ export class SessionWebviewProviderReact {
       // ignore
     }
 
+    const triggerReload = () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(async () => {
+        try {
+          const updatedData = await this.loadSessionData(sessionId);
+          if (updatedData) {
+            panel.webview.postMessage({
+              type: 'sessionData',
+              data: updatedData,
+            });
+          }
+        } catch (err) {
+          console.error('Error reloading session for live update:', err);
+        }
+      }, 500);
+    };
+
+    // Lazy-mounts a watcher on the subagents/ directory for this session.
+    // Claude Code creates the directory only when it first spawns an agent,
+    // so we (re-)try whenever the main file changes until it appears.
+    const ensureSubagentWatcher = () => {
+      if (this.subagentWatchers.has(sessionId)) return;
+      const subDir = this.parserService.getSubagentsDir(
+        sessionInfo.projectDir,
+        sessionId
+      );
+      if (!fs.existsSync(subDir)) return;
+      try {
+        const subWatcher = fs.watch(subDir, () => {
+          // Any add/change inside the subagents dir → reuse the same debounce
+          // so we don't double-reload when both main and agent files tick.
+          triggerReload();
+        });
+        this.subagentWatchers.set(sessionId, subWatcher);
+      } catch (err) {
+        console.error('Failed to start subagent watcher:', err);
+      }
+    };
+
     try {
       const watcher = fs.watch(sessionInfo.filePath, async (eventType) => {
         if (eventType !== 'change') {
@@ -160,27 +206,16 @@ export class SessionWebviewProviderReact {
           return;
         }
 
-        // Debounce: wait 500ms for writes to settle
-        if (debounceTimer) {
-          clearTimeout(debounceTimer);
-        }
-
-        debounceTimer = setTimeout(async () => {
-          try {
-            const updatedData = await this.loadSessionData(sessionId);
-            if (updatedData) {
-              panel.webview.postMessage({
-                type: 'sessionData',
-                data: updatedData,
-              });
-            }
-          } catch (err) {
-            console.error('Error reloading session for live update:', err);
-          }
-        }, 500);
+        // Cheap to retry on every change — fs.watch only fires on real writes
+        // and ensureSubagentWatcher short-circuits once mounted.
+        ensureSubagentWatcher();
+        triggerReload();
       });
 
       this.watchers.set(sessionId, watcher);
+
+      // The dir may already exist (re-opening a finished session).
+      ensureSubagentWatcher();
 
       // Notify webview that live mode is active
       panel.webview.postMessage({ type: 'liveMode', active: true });
@@ -189,11 +224,45 @@ export class SessionWebviewProviderReact {
     }
   }
 
+  private sendDirectoryTree(panel: vscode.WebviewPanel, cwd: string): void {
+    if (!cwd) {
+      return;
+    }
+    try {
+      if (!fs.existsSync(cwd) || !fs.statSync(cwd).isDirectory()) {
+        return;
+      }
+      const entries = fs.readdirSync(cwd, { withFileTypes: true })
+        .filter((e) => !e.name.startsWith('.'))
+        .map((e) => ({
+          name: e.name,
+          type: e.isDirectory() ? 'dir' : 'file',
+        }))
+        .sort((a, b) => {
+          if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+
+      panel.webview.postMessage({
+        type: 'directoryTree',
+        cwd,
+        entries,
+      });
+    } catch (err) {
+      console.error('Failed to read directory tree:', err);
+    }
+  }
+
   private stopWatching(sessionId: string): void {
     const watcher = this.watchers.get(sessionId);
     if (watcher) {
       watcher.close();
       this.watchers.delete(sessionId);
+    }
+    const subWatcher = this.subagentWatchers.get(sessionId);
+    if (subWatcher) {
+      subWatcher.close();
+      this.subagentWatchers.delete(sessionId);
     }
   }
 
@@ -233,6 +302,9 @@ export class SessionWebviewProviderReact {
       console.log('🤖 Parsing subagents...');
       const subagents = await this.parserService.parseSubagents(sessionInfo.projectDir, sessionId);
       session.subagents = subagents;
+      // Link each subagent to the Task tool_use step that spawned it so the
+      // webview can interleave its steps inline in the timeline.
+      this.parserService.linkSubagentsToParents(session.steps, subagents);
       console.log('✅ Subagents parsed:', subagents.length);
 
       // Run analysis

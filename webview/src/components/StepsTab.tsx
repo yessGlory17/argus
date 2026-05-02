@@ -197,6 +197,11 @@ const SORT_LABELS: Record<string, string> = {
 };
 
 /* ── Main component ── */
+// In a flattened (main + sub-agent) timeline, every step has a unique
+// globalIndex. We fall back to the local index for legacy callers that may
+// hand us un-flattened arrays.
+const keyOf = (step: Step): number => step.globalIndex ?? step.index;
+
 const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,6 +209,36 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortMode, setSortMode] = useState('newest');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [collapsedAgents, setCollapsedAgents] = useState<Set<string>>(new Set());
+
+  // agentId → Subagent for quick lookup
+  const subagentById = useMemo(() => {
+    const m = new Map<string, Subagent>();
+    for (const s of subagents) m.set(s.agentId, s);
+    return m;
+  }, [subagents]);
+
+  // main step local index → agents spawned there (for the collapse toggle on
+  // Task tool_use rows)
+  const agentsByParent = useMemo(() => {
+    const m = new Map<number, Subagent[]>();
+    for (const s of subagents) {
+      if (typeof s.parentStepIndex !== 'number') continue;
+      const arr = m.get(s.parentStepIndex) ?? [];
+      arr.push(s);
+      m.set(s.parentStepIndex, arr);
+    }
+    return m;
+  }, [subagents]);
+
+  const toggleAgent = useCallback((agentId: string) => {
+    setCollapsedAgents(prev => {
+      const next = new Set(prev);
+      if (next.has(agentId)) next.delete(agentId);
+      else next.add(agentId);
+      return next;
+    });
+  }, []);
 
   const toggleToolFilter = useCallback((value: string) => {
     setToolFilter(prev => {
@@ -225,7 +260,9 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
     return () => document.removeEventListener('click', close);
   }, []);
 
-  // Auto-expand highlighted step
+  // Auto-expand highlighted step. If the step belongs to a sub-agent that the
+  // user previously collapsed, also reveal it so the highlight isn't filtered
+  // out of the rendered list.
   useEffect(() => {
     if (highlightStep !== null) {
       setExpandedSteps(prev => {
@@ -233,6 +270,14 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
         newSet.add(highlightStep);
         return newSet;
       });
+      const target = steps.find(s => keyOf(s) === highlightStep);
+      if (target?.agentId && collapsedAgents.has(target.agentId)) {
+        setCollapsedAgents(prev => {
+          const next = new Set(prev);
+          next.delete(target.agentId!);
+          return next;
+        });
+      }
       setTimeout(() => {
         const element = document.querySelector('.step-item.highlight');
         if (element) {
@@ -240,7 +285,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
         }
       }, 100);
     }
-  }, [highlightStep]);
+  }, [highlightStep, steps, collapsedAgents]);
 
   const toggleStep = (index: number) => {
     const newSet = new Set(expandedSteps);
@@ -252,17 +297,25 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
     setExpandedSteps(newSet);
   };
 
-  // Map findings to step indices
+  // Map findings to globalIndex of the matching main-session steps. The
+  // analyzer reports findings against local step indices within its session,
+  // so we resolve those to the unique globalIndex used for highlighting.
   const stepFindings = useMemo(() => {
+    const mainByIndex = new Map<number, number>();
+    for (const s of steps) {
+      if (!s.agentId) mainByIndex.set(s.index, keyOf(s));
+    }
     const map = new Map<number, Finding[]>();
     findings.forEach(f => {
       f.affectedSteps?.forEach(idx => {
-        if (!map.has(idx)) map.set(idx, []);
-        map.get(idx)!.push(f);
+        const gi = mainByIndex.get(idx);
+        if (gi === undefined) return;
+        if (!map.has(gi)) map.set(gi, []);
+        map.get(gi)!.push(f);
       });
     });
     return map;
-  }, [findings]);
+  }, [findings, steps]);
 
   // Dynamic tool/type counts
   const toolCounts = useMemo(() => {
@@ -357,30 +410,36 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
     // Status filter
     if (statusFilter === 'success') result = result.filter(s => s.toolSuccess === true);
     if (statusFilter === 'failed') result = result.filter(s => s.toolSuccess === false);
-    if (statusFilter === 'issues') result = result.filter(s => stepFindings.has(s.index));
+    if (statusFilter === 'issues') result = result.filter(s => stepFindings.has(keyOf(s)));
 
-    // Sorting
+    // Hide steps whose owning agent the user collapsed
+    if (collapsedAgents.size > 0) {
+      result = result.filter(s => !s.agentId || !collapsedAgents.has(s.agentId));
+    }
+
+    // Sorting — keyOf preserves chronological order for both main and agent
+    // steps in the flattened list.
     switch (sortMode) {
-      case 'newest': result.sort((a, b) => b.index - a.index); break;
-      case 'oldest': result.sort((a, b) => a.index - b.index); break;
+      case 'newest': result.sort((a, b) => keyOf(b) - keyOf(a)); break;
+      case 'oldest': result.sort((a, b) => keyOf(a) - keyOf(b)); break;
       case 'cost-desc': result.sort((a, b) => b.cost - a.cost); break;
       case 'cost-asc': result.sort((a, b) => a.cost - b.cost); break;
     }
 
     return result;
-  }, [steps, searchQuery, toolFilter, statusFilter, sortMode, stepFindings]);
+  }, [steps, searchQuery, toolFilter, statusFilter, sortMode, stepFindings, collapsedAgents]);
 
   // Calculate duration for each step (time to next step)
   const stepDurations = useMemo(() => {
     const durations = new Map<number, number>();
-    const sorted = [...steps].sort((a, b) => a.index - b.index);
+    const sorted = [...steps].sort((a, b) => keyOf(a) - keyOf(b));
     for (let i = 0; i < sorted.length; i++) {
       if (!sorted[i].timestamp) continue;
       const current = new Date(sorted[i].timestamp!).getTime();
       if (i + 1 < sorted.length && sorted[i + 1].timestamp) {
         const next = new Date(sorted[i + 1].timestamp!).getTime();
         const diff = next - current;
-        if (diff >= 0) durations.set(sorted[i].index, diff);
+        if (diff >= 0) durations.set(keyOf(sorted[i]), diff);
       }
     }
     return durations;
@@ -519,22 +578,67 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
 
       <div className="steps-scroll">
         <div className="steps-list">
-        {filteredSteps.map(step => {
-          const isExpanded = expandedSteps.has(step.index);
-          const hasIssues = stepFindings.has(step.index);
-          const isHighlighted = highlightStep === step.index;
+        {filteredSteps.map((step, i) => {
+          const k = keyOf(step);
+          const isExpanded = expandedSteps.has(k);
+          const hasIssues = stepFindings.has(k);
+          const isHighlighted = highlightStep === k;
+          const ownerAgent = step.agentId ? subagentById.get(step.agentId) : undefined;
+          const linkedAgents =
+            (step.toolName === 'Task' || step.toolName === 'Agent') && !step.agentId
+              ? agentsByParent.get(step.index)
+              : undefined;
+          const allCollapsed = linkedAgents
+            ? linkedAgents.every(a => collapsedAgents.has(a.agentId))
+            : false;
+          // Tree-style connector positioning: the connector is owned by the
+          // agent rows themselves — line begins at the first agent step's
+          // top edge and terminates at the last with an "└" corner.
+          const prev = i > 0 ? filteredSteps[i - 1] : undefined;
+          const next = i + 1 < filteredSteps.length ? filteredSteps[i + 1] : undefined;
+          const isAgent = !!step.agentId;
+          const isFirstAgentInRun =
+            isAgent && (!prev || prev.agentId !== step.agentId);
+          const isLastAgentInRun =
+            isAgent && (!next || next.agentId !== step.agentId);
 
           return (
             <div
-              key={step.index}
-              className={`step-item ${isExpanded ? 'expanded' : ''} ${isHighlighted ? 'highlight' : ''} ${hasIssues ? 'has-issues' : ''}`}
+              key={k}
+              className={[
+                'step-item',
+                isExpanded ? 'expanded' : '',
+                isHighlighted ? 'highlight' : '',
+                hasIssues ? 'has-issues' : '',
+                isAgent ? 'step-item-agent' : '',
+                linkedAgents ? 'step-item-task' : '',
+                isFirstAgentInRun ? 'step-agent-first' : '',
+                isLastAgentInRun ? 'step-agent-last' : '',
+              ].filter(Boolean).join(' ')}
             >
-              <button className="step-header" onClick={() => toggleStep(step.index)}>
+              <button className="step-header" onClick={() => toggleStep(k)}>
                 <div className="step-left">
                   <StepIcon step={step} />
-                  <span className="step-index">#{step.index}</span>
+                  <span className="step-index">#{k}</span>
                   <span className="step-time">{formatTime(step.timestamp)}</span>
                   <span className="step-type">{step.toolName || step.type}</span>
+                  {ownerAgent && (
+                    <span className="step-agent-badge" title={ownerAgent.description || ownerAgent.prompt}>
+                      {ownerAgent.agentType || 'agent'}
+                    </span>
+                  )}
+                  {linkedAgents && linkedAgents.length > 0 && (
+                    <button
+                      className={`step-task-toggle${allCollapsed ? ' collapsed' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        for (const a of linkedAgents) toggleAgent(a.agentId);
+                      }}
+                      title={allCollapsed ? 'Show agent steps' : 'Hide agent steps'}
+                    >
+                      {allCollapsed ? '▸' : '▾'} {linkedAgents.reduce((acc, a) => acc + a.stepCount, 0)} agent steps
+                    </button>
+                  )}
                   {step.toolSuccess === false && <span className="step-failed">✕</span>}
                   {step.toolSuccess === true && <span className="step-success">✓</span>}
                   {getStepSummary(step) && (
@@ -542,9 +646,9 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
                   )}
                 </div>
                 <div className="step-right">
-                  {stepDurations.has(step.index) && (
-                    <span className={`step-duration${(stepDurations.get(step.index)!) >= 5000 ? ' slow' : ''}`}>
-                      {formatDuration(stepDurations.get(step.index)!)}
+                  {stepDurations.has(k) && (
+                    <span className={`step-duration${(stepDurations.get(k)!) >= 5000 ? ' slow' : ''}`}>
+                      {formatDuration(stepDurations.get(k)!)}
                     </span>
                   )}
                   <span className="step-cost">${step.cost.toFixed(4)}</span>
@@ -556,7 +660,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
                 <div className="step-details">
                   {hasIssues && (
                     <div className="step-findings">
-                      {stepFindings.get(step.index)!.map((f, i) => (
+                      {stepFindings.get(k)!.map((f, i) => (
                         <div key={i} className={`finding-inline ${f.severity}`}>
                           <strong>{f.title}</strong>
                           <p>{f.description}</p>
@@ -625,19 +729,6 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
         })}
         </div>
 
-        {subagents.length > 0 && (
-          <div className="subagents-section">
-            <h3>Subagents ({subagents.length})</h3>
-            {subagents.map(sub => (
-              <div key={sub.agentId} className="subagent-item">
-                <code>{sub.agentId.substring(0, 12)}</code>
-                <span>{sub.prompt.substring(0, 80)}...</span>
-                <span>{sub.stepCount} steps</span>
-                <span>${sub.totalCost.toFixed(4)}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

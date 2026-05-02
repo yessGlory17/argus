@@ -157,3 +157,52 @@
   color: var(--bg-dark);
   border-color: var(--accent);
 }
+
+/* Per-section findings (main session + per agent) */
+.findings-section {
+  margin-top: 24px;
+}
+
+.findings-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.findings-section-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.findings-section-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.findings-section-agent {
+  border-bottom-color: var(--status-warning, #d4a72c);
+}
+
+.agent-section-label {
+  display: inline-block;
+  padding: 1px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  border-radius: 3px;
+  color: var(--status-warning, #d4a72c);
+  background: rgba(212, 167, 44, 0.12);
+  text-transform: uppercase;
+}
+
+.step-link.disabled {
+  opacity: 0.4;
+  cursor: default;
+}

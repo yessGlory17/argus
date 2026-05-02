@@ -1,0 +1,564 @@
+.map-tab {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.map-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.map-controls-left,
+.map-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.map-btn {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 30px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms, border-color 120ms;
+}
+
+.map-btn:hover {
+  background: var(--bg-hover, var(--bg-panel));
+  border-color: var(--border-bright, var(--border));
+}
+
+.map-btn-primary {
+  background: var(--status-info);
+  color: var(--bg);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.map-btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.map-slider {
+  flex: 1;
+  height: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.map-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--status-info);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}
+
+.map-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--status-info);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}
+
+.map-step-counter {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 64px;
+  text-align: right;
+}
+
+.map-speed {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.map-canvas-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 560px;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.map-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Links */
+.map-link {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+  stroke-opacity: 0.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 220ms ease, stroke-opacity 220ms ease, stroke-width 220ms ease;
+}
+
+.map-link-read {
+  stroke: var(--status-info);
+  stroke-opacity: 0.95;
+  stroke-width: 1.8;
+}
+
+.map-link-written {
+  stroke: var(--status-success);
+  stroke-opacity: 1;
+  stroke-width: 2;
+}
+
+/* Newly drawn link — animate stroke from origin to destination.
+   The dasharray and starting offset are set inline by JS based on the
+   actual path length, so the animation lands cleanly on the target node
+   regardless of how curved or long the path is. */
+.map-link-fresh {
+  animation: map-link-draw 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes map-link-draw {
+  0% {
+    stroke-dashoffset: var(--map-link-len, 600px);
+    stroke-opacity: 0.2;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    stroke-opacity: 1;
+  }
+}
+
+/* Nodes — React Flow-style cards */
+.map-node {
+  cursor: default;
+}
+
+.map-node-clickable {
+  cursor: pointer;
+}
+
+.map-node-clickable .map-node-rect {
+  transition: filter 160ms ease, stroke-width 160ms ease, fill 220ms ease,
+    stroke 220ms ease;
+}
+
+.map-node-clickable:hover .map-node-rect {
+  filter: brightness(1.18);
+  stroke-width: 2.4;
+}
+
+.map-node-clickable:hover .map-node-label {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.map-node-rect {
+  fill: var(--bg-elevated);
+  stroke: var(--border);
+  stroke-width: 1.4;
+  transition: fill 220ms, stroke 220ms, stroke-width 220ms, filter 220ms;
+}
+
+.map-node-iconwrap {
+  overflow: visible;
+  pointer-events: none;
+}
+
+.map-node-iconpath {
+  stroke: var(--text-dim);
+  pointer-events: none;
+  transition: stroke 200ms ease, opacity 200ms ease;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map-node-label {
+  fill: var(--text);
+  font-size: 12px;
+  font-family: var(--font-code), monospace;
+  pointer-events: none;
+  user-select: none;
+}
+
+.map-node-badge {
+  fill: var(--text-dim);
+  font-size: 10px;
+  font-family: var(--font-code), monospace;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.85;
+}
+
+/* Status colors */
+.map-node-dim .map-node-rect {
+  fill: var(--bg-elevated);
+  stroke: var(--text-dim);
+  stroke-opacity: 0.6;
+  opacity: 0.85;
+}
+
+.map-node-dim .map-node-label {
+  opacity: 0.8;
+}
+
+.map-node-dim .map-node-iconpath {
+  opacity: 0.7;
+}
+
+.map-node-root .map-node-rect {
+  fill: var(--bg-panel);
+  stroke: var(--text-bright);
+  stroke-width: 1.8;
+  opacity: 1;
+}
+
+.map-node-root .map-node-label {
+  fill: var(--text-bright);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.map-node-root .map-node-iconpath {
+  stroke: var(--text-bright);
+  opacity: 1;
+}
+
+/* Read — ramp up intensity with each subsequent read of the same file. */
+.map-node-read .map-node-rect {
+  fill: color-mix(in srgb, var(--status-info) 14%, var(--bg-elevated));
+  stroke: var(--status-info);
+  stroke-width: 1.4;
+  opacity: 1;
+}
+
+.map-node-read.map-node-intensity-2 .map-node-rect {
+  fill: color-mix(in srgb, var(--status-info) 28%, var(--bg-elevated));
+  stroke-width: 1.7;
+}
+
+.map-node-read.map-node-intensity-3 .map-node-rect {
+  fill: color-mix(in srgb, var(--status-info) 50%, var(--bg-elevated));
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--status-info) 60%, transparent));
+}
+
+.map-node-read .map-node-label {
+  fill: var(--text-bright);
+  opacity: 1;
+}
+
+.map-node-read.map-node-intensity-3 .map-node-label,
+.map-node-read.map-node-intensity-3 .map-node-badge {
+  font-weight: 600;
+}
+
+.map-node-read .map-node-iconpath {
+  stroke: var(--status-info);
+  opacity: 1;
+}
+
+/* Written — same intensity ramp in green. */
+.map-node-written .map-node-rect {
+  fill: color-mix(in srgb, var(--status-success) 18%, var(--bg-elevated));
+  stroke: var(--status-success);
+  stroke-width: 1.6;
+  opacity: 1;
+}
+
+.map-node-written.map-node-intensity-2 .map-node-rect {
+  fill: color-mix(in srgb, var(--status-success) 32%, var(--bg-elevated));
+  stroke-width: 1.9;
+}
+
+.map-node-written.map-node-intensity-3 .map-node-rect {
+  fill: color-mix(in srgb, var(--status-success) 55%, var(--bg-elevated));
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--status-success) 65%, transparent));
+}
+
+.map-node-written .map-node-label {
+  fill: var(--text-bright);
+  opacity: 1;
+}
+
+.map-node-written.map-node-intensity-3 .map-node-label,
+.map-node-written.map-node-intensity-3 .map-node-badge {
+  font-weight: 600;
+}
+
+.map-node-written .map-node-iconpath {
+  stroke: var(--status-success);
+  opacity: 1;
+}
+
+/* Badge becomes more prominent the more intense the node. */
+.map-node-intensity-2 .map-node-badge {
+  opacity: 0.95;
+}
+.map-node-intensity-3 .map-node-badge {
+  opacity: 1;
+  fill: var(--text-bright);
+}
+
+/* Blob bounce-in animation for nodes that were just revealed.
+   The whole node group squishes in from a zero-scale, with a glow
+   that fades after the bounce settles. transform-box: fill-box keeps
+   the rect's transform-origin at its visual center. */
+.map-node-fresh .map-node-rect,
+.map-node-fresh .map-node-label,
+.map-node-fresh .map-node-iconwrap,
+.map-node-fresh .map-node-badge {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: map-blob-in 620ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.map-node-fresh .map-node-rect {
+  animation-name: map-blob-in, map-blob-glow;
+  animation-duration: 620ms, 1100ms;
+  animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1), ease-out;
+  animation-fill-mode: backwards, forwards;
+}
+
+.map-node-fresh.map-node-written .map-node-rect {
+  animation-name: map-blob-in, map-blob-glow-write;
+}
+
+@keyframes map-blob-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.18, 0.88);
+    opacity: 1;
+  }
+  72% {
+    transform: scale(0.94, 1.06);
+  }
+  88% {
+    transform: scale(1.03, 0.98);
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
+}
+
+@keyframes map-blob-glow {
+  0% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  35% {
+    filter: drop-shadow(0 0 12px var(--status-info));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+@keyframes map-blob-glow-write {
+  0% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  35% {
+    filter: drop-shadow(0 0 14px var(--status-success));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+/* Legend overlay */
+.map-legend {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 12px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+.map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+}
+
+.map-legend-dot.dim {
+  background: var(--bg-elevated);
+  opacity: 0.55;
+}
+
+.map-legend-dot.read {
+  background: var(--status-info);
+  border-color: var(--status-info);
+}
+
+.map-legend-dot.written {
+  background: var(--status-success);
+  border-color: var(--status-success);
+}
+
+.map-legend-dot.agent {
+  background: var(--status-warning, #d4a72c);
+  border-color: var(--status-warning, #d4a72c);
+}
+
+/* Bottom stats */
+.map-stats {
+  display: flex;
+  gap: 22px;
+  padding: 10px 14px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  align-items: center;
+}
+
+.map-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.map-stat-cwd {
+  margin-left: auto;
+  font-family: var(--font-code);
+  color: var(--text-dim);
+}
+
+.map-stat-label {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+}
+
+.map-stat-value {
+  font-family: var(--font-code);
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.map-stat-value.map-stat-read {
+  color: var(--status-info);
+}
+
+.map-stat-value.map-stat-written {
+  color: var(--status-success);
+}
+
+/* Empty state */
+.map-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+}
+
+.map-empty-icon {
+  font-size: 56px;
+  display: block;
+  margin-bottom: 14px;
+  opacity: 0.55;
+}
+
+.map-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* Sub-agent touched nodes — left ribbon + top-right pill so the marker is
+   visible across read/write intensity ramps. The rect's own stroke/fill
+   stays fully driven by the read/write status, so the ribbon never fights
+   with the primary signal. */
+.map-node-agent-ribbon {
+  fill: var(--status-warning, #d4a72c);
+  stroke: none;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+.map-node-agent-pill {
+  pointer-events: none;
+}
+
+.map-node-agent-pill rect {
+  fill: var(--status-warning, #d4a72c);
+  stroke: var(--bg-elevated);
+  stroke-width: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+.map-node-agent-pill text {
+  fill: var(--bg, #1a1a1a);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-family: var(--font-code), monospace;
+  user-select: none;
+}
+
+/* Lift agent-touched read/write nodes' label intensity slightly so they
+   read distinctly from non-agent counterparts, without over-saturating. */
+.map-node-agent.map-node-read .map-node-rect,
+.map-node-agent.map-node-written .map-node-rect {
+  stroke-width: 1.8;
+}
