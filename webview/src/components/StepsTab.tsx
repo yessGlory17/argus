@@ -577,7 +577,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
       </div>
 
       <div className="steps-scroll">
-        <div className="steps-list">
+        <div className={`steps-list${sortMode === 'newest' ? ' tree-reversed' : ''}`}>
         {filteredSteps.map((step, i) => {
           const k = keyOf(step);
           const isExpanded = expandedSteps.has(k);
@@ -611,7 +611,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
                 isHighlighted ? 'highlight' : '',
                 hasIssues ? 'has-issues' : '',
                 isAgent ? 'step-item-agent' : '',
-                linkedAgents ? 'step-item-task' : '',
+                linkedAgents && !allCollapsed ? 'step-item-task' : '',
                 isFirstAgentInRun ? 'step-agent-first' : '',
                 isLastAgentInRun ? 'step-agent-last' : '',
               ].filter(Boolean).join(' ')}

@@ -541,14 +541,33 @@
 }
 
 /* Sub-agent steps — git-graph-style connector tree.
-   The line is owned entirely by the agent rows: the first row anchors the
-   guide at its own top edge, each subsequent row continues it, and the last
-   row terminates with an "└" corner.
-     ::before  — vertical line spanning above/below based on first/last
+   The trunk originates at the spawning Task row's vertical center and
+   descends through every sub-agent row, terminating at the last row with
+   an "└" corner.
+     ::before  — vertical line; on the spawn row it covers the lower half,
+                 on agent rows it spans the row (last row stops at center).
      ::after   — short horizontal "branch" at the row's vertical center,
-                 leading from the guide to the icon.
-   A 5px left indent (padding shift) breathes the whole tree away from the
-   list's left edge. */
+                 leading from the trunk to the icon.
+   A 5px left indent on agent rows breathes the tree away from the list's
+   left edge; the spawn row's trunk is positioned to align across the gap. */
+
+/* Spawn (Task/Agent) row trunk: from the row's vertical center down to its
+   bottom, aligned horizontally with the agent rows' trunk below. */
+.step-item-task .step-header {
+  position: relative;
+}
+
+.step-item-task .step-header::before {
+  content: '';
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  bottom: 0;
+  width: 2px;
+  background: var(--status-warning, #d4a72c);
+  opacity: 0.7;
+}
+
 .step-item-agent .step-header {
   padding-left: 41px;
   position: relative;
@@ -578,14 +597,40 @@
   border-radius: 1px;
 }
 
-/* Last row of a run: vertical line terminates at the row's vertical center
-   forming the closing "└" corner with the horizontal branch. */
+/* Last row of a run (forward chronological display): vertical line
+   terminates at the row's vertical center forming the closing "└" corner
+   with the horizontal branch. */
 .step-item-agent.step-agent-last .step-header::before {
   bottom: 50%;
 }
 
 /* Single-row run — both first and last. Only the horizontal stub remains. */
 .step-item-agent.step-agent-first.step-agent-last .step-header::before {
+  display: none;
+}
+
+/* Reverse-chronological display (sortMode='newest'): the spawn row sits
+   BELOW its agent rows, so the trunk and corner flip vertically.
+   - Spawn row trunk lives in the UPPER half (toward the agents above).
+   - The "first" agent row in display order is chronologically LAST and
+     should carry the corner (line in lower half, "┌" pointing right).
+   - The "last" agent row in display order is chronologically FIRST,
+     adjacent to the spawn directly below — it gets the regular full line. */
+.tree-reversed .step-item-task .step-header::before {
+  top: 0;
+  bottom: 50%;
+}
+
+.tree-reversed .step-item-agent.step-agent-last .step-header::before {
+  bottom: 0;
+}
+
+.tree-reversed .step-item-agent.step-agent-first .step-header::before {
+  top: 50%;
+  bottom: 0;
+}
+
+.tree-reversed .step-item-agent.step-agent-first.step-agent-last .step-header::before {
   display: none;
 }
 
