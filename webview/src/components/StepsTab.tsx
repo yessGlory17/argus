@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Step, Subagent, Finding } from '../types/session';
+import ToolRenderer from './ToolRenderer';
+import ContentRenderer from './ContentRenderer';
+import RendererErrorBoundary from './RendererErrorBoundary';
 import './StepsTab.css';
 
 interface Props {
@@ -476,11 +479,10 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
         case 'Glob':
           return `"${step.toolInput.pattern}"${step.toolInput.path ? ` in ${step.toolInput.path}` : ''}`;
         case 'Bash':
-          const cmd = step.toolInput.command || '';
-          return cmd.length > 60 ? cmd.substring(0, 60) + '...' : cmd;
+          // Full command preserved — overflow handled by CSS ellipsis on .step-summary.
+          return step.toolInput.command || '';
         case 'Agent':
-          const desc = step.toolInput.description || step.toolInput.prompt || '';
-          return desc.length > 60 ? desc.substring(0, 60) + '...' : desc;
+          return step.toolInput.description || step.toolInput.prompt || '';
         default:
           return '';
       }
@@ -687,45 +689,42 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
                     </div>
                   )}
 
-                  {step.toolInput && (
+                  {(step.toolInput || step.toolResult) && (
                     <div className="detail-section">
-                      <div className="detail-label">Tool Input</div>
-                      <pre className="detail-code">{JSON.stringify(step.toolInput, null, 2)}</pre>
+                      <RendererErrorBoundary
+                        fallback={(err) => (
+                          <div className="renderer-fallback">
+                            <div className="renderer-fallback-header">
+                              Renderer crashed — showing raw data. ({err.message})
+                            </div>
+                            {step.toolInput !== undefined && (
+                              <pre className="detail-code">{JSON.stringify(step.toolInput, null, 2)}</pre>
+                            )}
+                            {step.toolResult !== undefined && (
+                              <pre className="detail-code">{step.toolResult}</pre>
+                            )}
+                          </div>
+                        )}
+                      >
+                        <ToolRenderer step={step} />
+                      </RendererErrorBoundary>
                     </div>
                   )}
 
-                  {step.toolResult && (
+                  {(step.type === 'text' || step.type === 'thinking') && step.content && (
                     <div className="detail-section">
-                      <div className="detail-label">Tool Result</div>
-                      <pre className="detail-code">
-                        {(() => {
-                          try {
-                            const parsed = JSON.parse(step.toolResult);
-                            const pretty = JSON.stringify(parsed, null, 2);
-                            return pretty.length > 2000 ? pretty.substring(0, 2000) + '...' : pretty;
-                          } catch {
-                            return step.toolResult.length > 2000 ? step.toolResult.substring(0, 2000) + '...' : step.toolResult;
-                          }
-                        })()}
-                      </pre>
-                    </div>
-                  )}
-
-                  {step.type === 'text' && step.content && (
-                    <div className="detail-section">
-                      <div className="detail-label">Text</div>
-                      <pre className="detail-text">
-                        {step.content.length > 2000 ? step.content.substring(0, 2000) + '...' : step.content}
-                      </pre>
-                    </div>
-                  )}
-
-                  {step.type === 'thinking' && step.content && (
-                    <div className="detail-section">
-                      <div className="detail-label">Thinking</div>
-                      <pre className="detail-text">
-                        {step.content.length > 2000 ? step.content.substring(0, 2000) + '...' : step.content}
-                      </pre>
+                      <RendererErrorBoundary
+                        fallback={(err) => (
+                          <div className="renderer-fallback">
+                            <div className="renderer-fallback-header">
+                              Renderer crashed — showing raw text. ({err.message})
+                            </div>
+                            <pre className="detail-text">{step.content}</pre>
+                          </div>
+                        )}
+                      >
+                        <ContentRenderer step={step} />
+                      </RendererErrorBoundary>
                     </div>
                   )}
 

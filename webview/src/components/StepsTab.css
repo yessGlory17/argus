@@ -527,6 +527,30 @@
   overflow-y: auto;
 }
 
+/* Surfaces a renderer crash without taking down the surrounding step.
+   The boundary catches the error and falls back to plain raw views. */
+.renderer-fallback {
+  border: 1px solid color-mix(in srgb, var(--status-error) 40%, var(--border));
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.renderer-fallback-header {
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--status-error) 12%, transparent);
+  color: var(--status-error);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--status-error) 30%, transparent);
+}
+
+.renderer-fallback .detail-code,
+.renderer-fallback .detail-text {
+  border: 0;
+  border-radius: 0;
+}
+
 .detail-text {
   font-family: var(--font-code);
   font-size: 12px;

@@ -228,9 +228,13 @@
   },
   "dependencies": {
     "@types/d3": "^7.4.3",
+    "@types/diff": "^7.0.2",
     "chart.js": "^4.5.1",
     "d3": "^7.9.0",
+    "diff": "^9.0.0",
+    "highlight.js": "^11.11.1",
     "lucide-react": "^0.575.0",
+    "marked": "^18.0.3",
     "react": "^19.2.4",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.4",

@@ -1,0 +1,676 @@
+/* ───────────────────────────────────────────────────────────────────────
+   ToolRenderer — rich, untruncated views for standard Claude tools
+   (Read, Write, Edit, MultiEdit, Bash, Grep, Glob, Task, TodoWrite,
+   WebFetch, WebSearch). Each renderer commits to a tight visual idiom:
+   diff blocks for edits, terminal panes for bash, code blocks with
+   gutters for reads/writes.
+   ─────────────────────────────────────────────────────────────────── */
+
+.tool-renderer {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  overflow: hidden;
+  font-family: var(--font-display, inherit);
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+/* Errored tools get a red-tinted shell so the failure reads from across
+   the panel, even before the banner copy itself. */
+.tool-renderer-error {
+  border-color: color-mix(in srgb, var(--status-error) 50%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-error) 25%, transparent);
+}
+
+.tool-renderer-error .tr-toolbar {
+  background: color-mix(in srgb, var(--status-error) 10%, var(--bg-panel));
+  border-bottom-color: color-mix(in srgb, var(--status-error) 35%, var(--border));
+}
+
+.tr-toolbar-error-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-code), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--status-error) 18%, transparent);
+  color: var(--status-error);
+  border: 1px solid color-mix(in srgb, var(--status-error) 50%, transparent);
+  margin-left: 8px;
+  line-height: 1;
+}
+
+/* Pretty-view error banner. Pulls the full error text verbatim out of
+   whatever shape the result took (string body, .stderr, .error, etc.) and
+   surfaces it as the first thing the eye lands on inside the renderer. */
+.tr-error-banner {
+  background: color-mix(in srgb, var(--status-error) 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--status-error) 35%, transparent);
+}
+
+.tr-error-banner-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: var(--status-error);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.tr-error-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.tr-error-banner-label {
+  letter-spacing: 0.6px;
+}
+
+.tr-error-banner-body {
+  margin: 0;
+  padding: 0 14px 10px;
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.tr-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.tr-tool-name {
+  font-family: var(--font-code), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.tr-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.tr-toggle-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 3px 12px;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.tr-toggle-btn:hover {
+  color: var(--text);
+}
+
+.tr-toggle-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ─── Block & path header ─────────────────────────────────────────── */
+.tr-block {
+  padding: 0;
+}
+
+.tr-path-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tr-path {
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  color: var(--text-bright);
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
+.tr-meta {
+  font-family: var(--font-code), monospace;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  letter-spacing: 0.2px;
+}
+
+.tr-section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 6px 12px 2px;
+}
+
+.tr-mono {
+  font-family: var(--font-code), monospace;
+}
+
+.tr-link {
+  color: var(--status-info);
+  text-decoration: none;
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.tr-link:hover {
+  text-decoration: underline;
+}
+
+.tr-empty {
+  padding: 14px;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* ─── Badges ──────────────────────────────────────────────────────── */
+.tr-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-code), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tr-badge-info {
+  color: var(--status-info);
+  background: color-mix(in srgb, var(--status-info) 16%, transparent);
+  border-color: color-mix(in srgb, var(--status-info) 45%, transparent);
+}
+
+.tr-badge-success {
+  color: var(--status-success);
+  background: color-mix(in srgb, var(--status-success) 18%, transparent);
+  border-color: color-mix(in srgb, var(--status-success) 50%, transparent);
+}
+
+.tr-badge-warn {
+  color: var(--status-warning, #d4a72c);
+  background: color-mix(in srgb, var(--status-warning, #d4a72c) 18%, transparent);
+  border-color: color-mix(in srgb, var(--status-warning, #d4a72c) 50%, transparent);
+}
+
+.tr-badge-error {
+  color: var(--status-error);
+  background: color-mix(in srgb, var(--status-error) 16%, transparent);
+  border-color: color-mix(in srgb, var(--status-error) 45%, transparent);
+}
+
+.tr-badge-bash {
+  color: #8FBF7F;
+  background: color-mix(in srgb, #8FBF7F 18%, transparent);
+  border-color: color-mix(in srgb, #8FBF7F 50%, transparent);
+}
+
+.tr-badge-task {
+  color: #6CB4C4;
+  background: color-mix(in srgb, #6CB4C4 18%, transparent);
+  border-color: color-mix(in srgb, #6CB4C4 50%, transparent);
+}
+
+/* ─── Code block ──────────────────────────────────────────────────── */
+.tr-code {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-dark, #1a1a1a);
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-x: auto;
+  max-height: 720px;
+  overflow-y: auto;
+}
+
+.tr-code code {
+  display: block;
+  background: transparent;
+  padding: 8px 0;
+  white-space: pre;
+}
+
+.tr-code-line {
+  display: flex;
+  align-items: flex-start;
+  padding: 0 12px 0 0;
+}
+
+.tr-code-line:hover {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.tr-code-gutter {
+  flex-shrink: 0;
+  text-align: right;
+  padding: 0 12px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  user-select: none;
+  border-right: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  margin-right: 12px;
+}
+
+.tr-code-content {
+  flex: 1;
+  min-width: 0;
+  white-space: pre;
+}
+
+.tr-code-raw {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--bg-dark, #1a1a1a);
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ─── Diff (Edit/MultiEdit) ───────────────────────────────────────── */
+.tr-diff {
+  background: var(--bg-dark, #1a1a1a);
+}
+
+.tr-diff-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-code), monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tr-diff-add {
+  color: var(--status-success);
+}
+
+.tr-diff-del {
+  color: var(--status-error);
+}
+
+.tr-diff-flag {
+  color: var(--text-dim);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.tr-diff-body {
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-x: auto;
+  max-height: 720px;
+  overflow-y: auto;
+}
+
+.tr-diff-line {
+  display: flex;
+  align-items: flex-start;
+  padding: 0 12px 0 0;
+  white-space: pre;
+}
+
+.tr-diff-sign {
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+  user-select: none;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.tr-diff-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.tr-diff-add-line {
+  background: color-mix(in srgb, var(--status-success) 16%, transparent);
+  border-left: 3px solid var(--status-success);
+  padding-left: 0;
+}
+
+.tr-diff-add-line .tr-diff-sign {
+  color: var(--status-success);
+}
+
+.tr-diff-del-line {
+  background: color-mix(in srgb, var(--status-error) 16%, transparent);
+  border-left: 3px solid var(--status-error);
+}
+
+.tr-diff-del-line .tr-diff-sign {
+  color: var(--status-error);
+}
+
+.tr-diff-ctx-line {
+  border-left: 3px solid transparent;
+  opacity: 0.75;
+}
+
+/* MultiEdit stack */
+.tr-multi-edits {
+  display: flex;
+  flex-direction: column;
+}
+
+.tr-multi-edit-item:not(:first-child) {
+  border-top: 1px solid var(--border);
+}
+
+.tr-multi-edit-header {
+  font-family: var(--font-code), monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 60%, transparent);
+}
+
+/* ─── Bash terminal ───────────────────────────────────────────────── */
+.tr-bash {
+  background: var(--bg-dark, #1a1a1a);
+}
+
+.tr-bash-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tr-bash-desc {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  flex: 1;
+  min-width: 0;
+}
+
+.tr-bash-cmd {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  font-family: var(--font-code), monospace;
+  font-size: 12.5px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+}
+
+.tr-bash-prompt {
+  color: var(--status-success);
+  font-weight: 700;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.tr-bash-cmd-text {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text-bright);
+}
+
+.tr-bash-stdout,
+.tr-bash-stderr {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.tr-bash-stdout {
+  color: var(--text);
+}
+
+.tr-bash-stderr {
+  color: var(--status-error);
+  background: color-mix(in srgb, var(--status-error) 6%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--status-error) 25%, transparent);
+}
+
+/* ─── Grep / Glob ────────────────────────────────────────────────── */
+.tr-grep-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tr-grep-pattern {
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  color: var(--syntax-string, var(--status-warning));
+  background: color-mix(in srgb, var(--bg) 60%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.tr-grep-body {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 600px;
+  overflow-y: auto;
+  background: var(--bg-dark, #1a1a1a);
+}
+
+.tr-glob-list {
+  margin: 0;
+  padding: 8px 12px 10px;
+  list-style: none;
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.tr-glob-list li {
+  padding: 2px 0;
+  color: var(--text);
+  word-break: break-all;
+}
+
+/* ─── Task / Subagent ────────────────────────────────────────────── */
+.tr-task-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tr-task-type {
+  font-family: var(--font-code), monospace;
+  font-size: 11px;
+  color: var(--text-bright);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.tr-task-desc {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.tr-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tr-task-prompt,
+.tr-task-result {
+  padding: 0 0 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+
+.tr-task-result {
+  border-bottom: 0;
+}
+
+.tr-text {
+  margin: 0;
+  padding: 6px 12px 10px;
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* ─── TodoWrite ──────────────────────────────────────────────────── */
+.tr-todo-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+.tr-todo-list {
+  margin: 0;
+  padding: 8px 12px 10px;
+  list-style: none;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.tr-todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.tr-todo-icon {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  font-family: var(--font-code), monospace;
+  font-weight: 700;
+  user-select: none;
+}
+
+.tr-todo-text {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.tr-todo-pending {
+  color: var(--text-dim);
+}
+.tr-todo-pending .tr-todo-icon {
+  color: var(--text-dim);
+}
+
+.tr-todo-in_progress {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+.tr-todo-in_progress .tr-todo-icon {
+  color: var(--status-info);
+}
+
+.tr-todo-completed {
+  color: var(--text-dim);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--text-dim) 50%, transparent);
+}
+.tr-todo-completed .tr-todo-icon {
+  color: var(--status-success);
+}
+
+/* ─── Raw view ───────────────────────────────────────────────────── */
+.tr-raw {
+  display: flex;
+  flex-direction: column;
+}
+
+.tr-raw-section + .tr-raw-section {
+  border-top: 1px solid var(--border);
+}

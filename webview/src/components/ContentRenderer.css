@@ -1,0 +1,228 @@
+/* ContentRenderer — pretty/raw view for text & thinking step types.
+   Pretty = markdown rendering with code-fence highlighting.
+   Raw    = exact original string in a monospace block.            */
+
+.content-renderer {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  overflow: hidden;
+  font-family: var(--font-display, inherit);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.cr-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.cr-kind {
+  font-family: var(--font-code), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.cr-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cr-toggle-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 3px 12px;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.cr-toggle-btn:hover {
+  color: var(--text);
+}
+
+.cr-toggle-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* Pretty markdown body */
+.cr-pretty {
+  padding: 12px 16px;
+  line-height: 1.65;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-height: 720px;
+  overflow-y: auto;
+}
+
+.cr-pretty > *:first-child { margin-top: 0; }
+.cr-pretty > *:last-child  { margin-bottom: 0; }
+
+.cr-pretty p {
+  margin: 0 0 10px;
+}
+
+.cr-pretty h1,
+.cr-pretty h2,
+.cr-pretty h3,
+.cr-pretty h4,
+.cr-pretty h5,
+.cr-pretty h6 {
+  margin: 18px 0 10px;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.3;
+}
+
+.cr-pretty h1 { font-size: 1.4em; }
+.cr-pretty h2 { font-size: 1.25em; }
+.cr-pretty h3 { font-size: 1.1em; }
+.cr-pretty h4 { font-size: 1em; }
+.cr-pretty h5,
+.cr-pretty h6 { font-size: 0.95em; color: var(--text-dim); }
+
+.cr-pretty ul,
+.cr-pretty ol {
+  margin: 0 0 10px;
+  padding-left: 22px;
+}
+
+.cr-pretty li {
+  margin: 2px 0;
+}
+
+.cr-pretty li > p {
+  margin: 0;
+}
+
+.cr-pretty blockquote {
+  margin: 0 0 10px;
+  padding: 4px 12px;
+  border-left: 3px solid var(--border);
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--text-dim) 5%, transparent);
+}
+
+.cr-pretty hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 14px 0;
+}
+
+.cr-pretty a {
+  color: var(--status-info);
+  text-decoration: none;
+}
+
+.cr-pretty a:hover {
+  text-decoration: underline;
+}
+
+.cr-pretty strong { color: var(--text-bright); }
+.cr-pretty em     { font-style: italic; }
+
+.cr-pretty code {
+  font-family: var(--font-code), monospace;
+  font-size: 0.9em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--text-dim) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  color: var(--syntax-string, var(--status-warning));
+}
+
+/* Code fences are wrapped in .cr-code; reset the inline-code styling for
+   the <code> nested inside the <pre> */
+.cr-pretty .cr-code {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  background: var(--bg-dark, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.cr-pretty .cr-code code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--text);
+  font-size: inherit;
+  white-space: pre;
+}
+
+.cr-pretty table {
+  border-collapse: collapse;
+  margin: 0 0 10px;
+  font-size: 0.95em;
+  width: 100%;
+}
+
+.cr-pretty th,
+.cr-pretty td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.cr-pretty th {
+  background: var(--bg-panel);
+  font-weight: 600;
+}
+
+/* Thinking style — quote-leaning, slightly dimmer to communicate "this is
+   the model's internal monologue, not the user-facing text". */
+.cr-thinking .cr-pretty {
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--text-dim) 4%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--text-dim) 35%, transparent);
+}
+
+.cr-thinking .cr-pretty p,
+.cr-thinking .cr-pretty li {
+  font-style: italic;
+}
+
+.cr-thinking .cr-pretty strong,
+.cr-thinking .cr-pretty h1,
+.cr-thinking .cr-pretty h2,
+.cr-thinking .cr-pretty h3 {
+  color: var(--text);
+  font-style: normal;
+}
+
+/* Raw view — straight monospace dump, no truncation */
+.cr-raw {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--bg-dark, #1a1a1a);
+  font-family: var(--font-code), monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  max-height: 720px;
+  overflow-y: auto;
+}
