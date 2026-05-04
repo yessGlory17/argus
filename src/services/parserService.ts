@@ -272,13 +272,36 @@ export class ParserService {
         }
       }
 
-      // Process tool results
+      // Process tool results. The error flag (`is_error: true`) lives on
+      // the tool_result content block inside `event.message.content`, not
+      // on `event.toolUseResult` (which is often just a string preview of
+      // the result body). Resolve the source-tool's UUID against the
+      // tool_result blocks to find the matching one. Fall back to a
+      // string-prefix check on `toolUseResult` for older session formats
+      // that stored the result as a plain "Error: ..." string.
       if (event.type === 'user' && event.toolUseResult && event.sourceToolAssistantUUID) {
         const toolStep = toolCallMap.get(event.sourceToolAssistantUUID);
         if (toolStep && typeof toolStep.index === 'number') {
           const result = event.toolUseResult;
           steps[toolStep.index].toolResult = JSON.stringify(result);
-          steps[toolStep.index].toolSuccess = !result.is_error;
+
+          let isError = false;
+          const blocks = event.message?.content;
+          if (Array.isArray(blocks)) {
+            for (const b of blocks) {
+              if (b && b.type === 'tool_result' && b.is_error === true) {
+                isError = true;
+                break;
+              }
+            }
+          }
+          if (!isError && typeof result === 'object' && result !== null && (result as any).is_error === true) {
+            isError = true;
+          }
+          if (!isError && typeof result === 'string' && /^error\b/i.test(result.trim())) {
+            isError = true;
+          }
+          steps[toolStep.index].toolSuccess = !isError;
         }
       }
     }
