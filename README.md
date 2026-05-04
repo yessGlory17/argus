@@ -1,659 +1,264 @@
-<div align="center">
+<p align="center">
+  <img src="logo.png" alt="Argus logo" width="180" />
+</p>
 
-<br/>
+<p align="center"><strong>Argus — Claude Code Agent Monitoring &amp; Observability on VSCode.</strong></p>
 
-<img src="icon-256px.png" alt="Argus Logo" width="120" height="120"/>
+<p align="center">
+  <img src="https://img.shields.io/badge/VS%20Code-1.80%2B-0078d7?logo=visualstudiocode&logoColor=white" alt="VS Code 1.80+" />
+  <img src="https://img.shields.io/badge/runtime-TypeScript-3178c6?logo=typescript&logoColor=white" alt="TypeScript runtime" />
+  <img src="https://img.shields.io/badge/webview-React%2019-61dafb?logo=react&logoColor=black" alt="React 19 webview" />
+  <img src="https://img.shields.io/badge/bundler-Vite%207-646cff?logo=vite&logoColor=white" alt="Vite 7" />
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-f28c28" alt="macOS, Linux, Windows" />
+  <img src="https://img.shields.io/badge/license-MIT-0f7ae5" alt="MIT license" />
+</p>
 
-<br/>
+<p align="center">
+  <a href="https://github.com/yessGlory17/argus/issues"><img src="https://img.shields.io/badge/Report%20a%20Bug-000000?style=for-the-badge&logo=github&logoColor=white" alt="Report a Bug" /></a>
+  <a href="https://github.com/yessGlory17/argus/issues"><img src="https://img.shields.io/badge/Request%20a%20Feature-5865F2?style=for-the-badge&logo=github&logoColor=white" alt="Request a Feature" /></a>
+</p>
 
-# **ARGUS**
+<p align="center"><strong>⭐ If Argus helps you ship better Claude Code sessions, a GitHub Star goes a long way.</strong></p>
 
-### *Claude Code Session Debugger & Performance Analyzer*
+<p align="center">
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
 
-<br/>
+# Argus
 
-<table>
-<tr>
-<td align="center" style="border: none; background: transparent;">
-<h3>👁️ SEE EVERYTHING</h3>
-</td>
-<td align="center" style="border: none; background: transparent;">
-<h3>🎯 OPTIMIZE EVERYTHING</h3>
-</td>
-<td align="center" style="border: none; background: transparent;">
-<h3>⚡ SAVE TIME</h3>
-</td>
-</tr>
-</table>
+**Argus** is an open-source VS Code extension that brings deep monitoring and observability to your Claude Code agent sessions. It reads the JSONL transcripts that Claude Code writes to `~/.claude/projects/`, parses every tool call, prompt, and token, and turns them into a coherent, inspectable picture of what your agent actually did — step by step, file by file, dollar by dollar.
 
-<br/>
+Instead of treating each agent run as an opaque black box, Argus makes the full execution trace first-class: every Read, Write, Edit, Bash, WebFetch, and subagent call is timestamped, costed, and linked into the dependency graph it produced. You see retry loops before they burn through tokens, duplicated reads before they pad the context window, failed tools before they cascade, and compaction events before they erase state. Sessions stream live as Claude Code runs, so monitoring is continuous rather than post-mortem, and everything stays inside the editor where the work is already happening.
 
-[![VS Code Extension](https://img.shields.io/badge/VS%20Code-Extension-0078d7?style=for-the-badge&logo=visual-studio-code&logoColor=white)](https://code.visualstudio.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-19.2-61dafb?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-7.3-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![MIT License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)](LICENSE)
+Named after the hundred-eyed watchman of Greek mythology, Argus is built for developers, teams, and researchers who want to understand — not guess — how their Claude Code agents spend time, money, and context.
 
-<br/>
+<p align="center">
+  <video src="screenshots/video.mp4" controls width="1280"></video>
+</p>
 
-**[✨ Features](#-features)** •
-**[📸 Screenshots](#-screenshots)** •
-**[📦 Installation](#-installation)** •
-**[🚀 Usage](#-usage)** •
-**[🏗️ Architecture](#️-architecture)** •
-**[📊 Stats](#-project-stats)**
+## Screenshots
 
-</div>
+<p align="center"><strong>Steps</strong> — searchable, filterable execution log</p>
+<p align="center"><img src="screenshots/steps.png" alt="Steps tab" width="1280" /></p>
 
-<br/>
+<p align="center"><strong>Analysis</strong> — duplicate reads, retry loops, and optimization findings</p>
+<p align="center"><img src="screenshots/analysis.png" alt="Analysis tab" width="1280" /></p>
 
-> 🔮 **Named after the all-seeing giant of Greek mythology** — Argus watches over your Claude Code sessions, detecting inefficiencies, tracking costs, and optimizing your AI development experience.
+<p align="center"><strong>Cost</strong> — per-step token and USD breakdown with cache attribution</p>
+<p align="center"><img src="screenshots/cost.png" alt="Cost tab" width="1280" /></p>
 
-<br/>
+<p align="center"><strong>Performance</strong> — efficiency scoring and wasted-cost analysis</p>
+<p align="center"><img src="screenshots/performance.png" alt="Performance tab" width="1280" /></p>
 
----
+<p align="center"><strong>Flow</strong> — interactive dependency graph of file operations</p>
+<p align="center"><img src="screenshots/flow.png" alt="Flow tab" width="1280" /></p>
 
-## 🎯 What is Argus?
+<p align="center"><strong>Context</strong> — token usage, cache-hit ratio, window utilization</p>
+<p align="center"><img src="screenshots/context.png" alt="Context tab" width="1280" /></p>
 
-**Argus** is a powerful VS Code extension that provides **deep insights into Claude Code sessions**, helping developers optimize their AI-assisted workflows through intelligent analysis and beautiful visualizations.
+<p align="center"><strong>Insights</strong> — recommendations and pattern recognition</p>
+<p align="center"><img src="screenshots/insights.png" alt="Insights tab" width="1280" /></p>
 
-<div align="center">
+## Table of Contents
 
-### 🌟 **Why Choose Argus?**
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Architecture](#architecture)
+- [Use Cases](#use-cases)
+- [Contributing](#contributing)
+- [License](#license)
 
-</div>
+## Features
 
-<table align="center">
-<tr>
-<td align="center" width="20%">
-<br/>
-💸
-<br/><br/>
-<b>Save Money</b>
-<br/><br/>
-<sub>Identify wasted API calls and optimize token usage</sub>
-<br/><br/>
-</td>
-<td align="center" width="20%">
-<br/>
-⚡
-<br/><br/>
-<b>Speed Up Development</b>
-<br/><br/>
-<sub>Detect retry loops and duplicate operations</sub>
-<br/><br/>
-</td>
-<td align="center" width="20%">
-<br/>
-🔬
-<br/><br/>
-<b>Deep Analysis</b>
-<br/><br/>
-<sub>Understand how Claude Code works under the hood</sub>
-<br/><br/>
-</td>
-<td align="center" width="20%">
-<br/>
-📊
-<br/><br/>
-<b>Visual Insights</b>
-<br/><br/>
-<sub>Beautiful dashboards with real-time monitoring</sub>
-<br/><br/>
-</td>
-<td align="center" width="20%">
-<br/>
-🎓
-<br/><br/>
-<b>Learn & Improve</b>
-<br/><br/>
-<sub>Understand patterns and optimize your prompts</sub>
-<br/><br/>
-</td>
-</tr>
-</table>
+### Monitoring & observability
 
----
+| Capability | What it gives you |
+| --- | --- |
+| **Live session watcher** | File-watcher tails the active JSONL transcript and re-renders the dashboard as Claude Code writes new events |
+| **Automatic discovery** | Recursively scans `~/.claude/projects/` and surfaces every session — no manual import |
+| **Subagent tracking** | Detects spawned subagents, attributes their tool calls, and links them back to the parent step |
+| **Cost telemetry** | Per-step and per-session token + USD cost, broken down by input / output / cache read / cache write |
+| **Context-window metrics** | Cache-hit ratio, window utilization, and compaction-event detection |
 
-## ✨ Features
+### Built-in analysis rules
 
-### 🔍 **Intelligent Session Discovery**
+Argus ships with a rule-based analyzer that flags the patterns that quietly waste tokens and time:
 
-<details open>
-<summary><b>Click to expand</b></summary>
-<br/>
+- **Duplicate reads** — the same file pulled into context multiple times
+- **Unused operations** — tool outputs the agent never referenced again
+- **Retry loops** — repeated failing tool calls with identical arguments
+- **Failed tools** — non-zero exits, parse errors, permission denials
+- **Context pressure** — windows approaching their cap before compaction
+- **Compaction events** — detects when Claude Code dropped earlier history
 
-| Feature | Description |
-|---------|-------------|
-| 🔎 **Automatic Scanning** | Discovers all Claude Code sessions from `~/.claude/projects/` |
-| 🎛️ **Smart Filtering** | Filter by model (Opus/Sonnet/Haiku), date presets (1h, 24h, 7d, 30d), or custom calendar range |
-| 📅 **Custom Calendar Picker** | Built-in range selector with month navigation, today highlight, and range visualization |
-| 📡 **Real-time Monitoring** | Watch sessions update as they progress with live file watching |
-| 📂 **Session Grouping** | Group sessions by project or model, with collapsible sections |
-| 🔄 **Refresh with Progress** | Manual refresh with progress notification and optimized discovery |
+### Multi-tab analysis dashboard
 
-</details>
+| Tab | What's inside |
+| --- | --- |
+| **Steps** | Full execution log with text search, multi-tool filter, status filter, sort by time/cost, per-step duration, per-tool icons |
+| **Analysis** | All findings from the rule engine with severity, evidence, and jump-to-step links |
+| **Cost** | Token & USD breakdown, model attribution, cache-hit ratio, spending charts |
+| **Performance** | Efficiency score, wasted-cost estimate, bottleneck timing |
+| **Flow** | D3-powered dependency graph of file Reads / Writes / Edits across steps |
+| **Context** | Token budget, cache performance, I/O distribution, compaction markers |
+| **Insights** | AI-derived recommendations and pattern observations |
+| **Map** | Birds-eye view of the session topology |
 
-### 📊 **Comprehensive Analysis Dashboard**
+### Sidebar & filtering
 
-<details open>
-<summary><b>7 Powerful Analysis Tabs</b></summary>
-<br/>
+- Inline session search and model filter (Opus / Sonnet / Haiku)
+- Date presets (1h / 24h / 7d / 30d) plus a custom calendar range picker
+- Group by project, by model, or flat list
+- Sticky headers, tabs, and filters that stay put while content scrolls
+- Native dark-mode integration with the active VS Code theme
 
-| Tab | Features |
-|-----|----------|
-| **📝 Steps** | Full-text search • Multi-select tool filter • Status filter (Success/Failed/Issues) • Sort by time or cost • Per-step duration • Lucide icons per tool type • Inline findings |
-| **🔍 Analysis** | 6 intelligent rules: Duplicate Reads • Unused Operations • Retry Loops • Failed Tools • Context Pressure • Compaction Events |
-| **💰 Cost** | Step-by-step breakdown • Token visualization • Cache hit ratio • Model attribution • Spending graphs |
-| **⚡ Performance** | Efficiency score • Wasted cost calculations • Timing analysis • Bottleneck identification |
-| **🌊 Flow** | Interactive dependency graph • File operation flow • Read/Write/Edit tracking • Step relationships |
-| **🧠 Context** | Token usage tracking • Cache performance • Window utilization • I/O distribution |
-| **💡 Insights** | AI-powered recommendations • Pattern recognition • Optimization suggestions • Best practices |
+## Quick Start
 
-</details>
+### Requirements
 
-### 🎨 **Modern UI/UX**
-- **React-powered Webviews**: Smooth, responsive interface built with React 19
-- **Custom Dropdowns & Calendar**: Fully styled filter controls — no native browser widgets
-- **Interactive Visualizations**: Charts powered by Chart.js and Recharts
-- **D3.js Graphs**: Beautiful dependency flow diagrams
-- **Dark Mode Native**: Seamlessly integrates with VS Code themes
-- **Lucide Icons**: Per-tool-type stroke icons with a pastel color palette
-- **Sticky Filters**: Header, tabs, and filters stay fixed while content scrolls
+- VS Code `1.80` or later
+- Node.js `18+` (only for building from source)
+- An existing Claude Code installation that writes sessions to `~/.claude/projects/`
 
-### 🔧 **Developer Experience**
+### Install from VSIX (recommended)
 
-- **Sidebar Webview**: Sessions listed with inline search, model & date filters
-- **Command Palette**: Quick access to all features
-- **Status Bar Item**: Argus indicator in the status bar
-- **Hot Reload**: Vite-powered development for instant updates
-- **TypeScript**: Fully typed for better DX and reliability
-
----
-
-## 📸 Screenshots
-
-<div align="center">
-
-### **Analysis Tab**
-*Intelligent detection of duplicate reads, retry loops, and optimization opportunities*
-
-![Analysis Tab](screenshots/analysis.png)
-
-<br/>
-
-### **Cost Tab**
-*Detailed breakdown of token usage and API costs per step with interactive charts*
-
-![Cost Tab](screenshots/cost.png)
-
-<br/>
-
-### **Performance Tab**
-*Session efficiency scores, wasted cost analysis, and performance metrics*
-
-![Performance Tab](screenshots/performance.png)
-
-<br/>
-
-### **Flow Tab**
-*Interactive dependency graph showing file operations and step relationships*
-
-![Flow Tab](screenshots/flow.png)
-
-<br/>
-
-### **Steps Tab**
-*Step-by-step execution log with detailed tool call inspection and timing*
-
-![Steps Tab](screenshots/steps.png)
-
-<br/>
-
-### **Context Tab**
-*Token usage tracking, cache performance, and context window utilization*
-
-![Context Tab](screenshots/context.png)
-
-<br/>
-
-### **Insights Tab**
-*AI-powered recommendations, pattern recognition, and optimization suggestions*
-
-![Insights Tab](screenshots/insights.png)
-
-</div>
-
----
-
-## 📦 Installation
-
-### Option 1: From VSIX (Recommended)
+Grab the latest `.vsix` from the [Releases page](https://github.com/yessGlory17/argus/releases) and install it:
 
 ```bash
-# Download the latest .vsix file from releases
-code --install-extension argus-0.1.0.vsix
+code --install-extension argus-claude-0.2.0.vsix
 ```
 
-### Option 2: From Source
+Open VS Code, click the **Argus** eye icon in the Activity Bar, and your existing Claude Code sessions appear automatically. No login, no upload, no config — transcripts never leave your machine.
+
+### Build from source
 
 ```bash
-# Clone the repository
 git clone https://github.com/yessGlory17/argus.git
-cd argus-vscode
-
-# Install dependencies
+cd argus/argus-vscode
 npm install
-
-# Compile TypeScript
 npm run compile
-
-# Build webview
 npm run build:webview
-
-# Package extension
 npx vsce package
-
-# Install the packaged extension
-code --install-extension argus-0.1.0.vsix
+code --install-extension argus-claude-0.2.0.vsix
 ```
 
----
+## Usage
 
-## 🛠️ Development
-
-### Setting Up Development Environment
-
-```bash
-# Clone and install
-git clone https://github.com/yessGlory17/argus.git
-cd argus-vscode
-npm install
-```
-
-### Running in Development Mode
-
-```bash
-# Terminal 1: Watch TypeScript changes
-npm run watch
-
-# Terminal 2: Watch webview changes
-npm run dev:webview
-```
-
-Then press **F5** in VS Code to launch the Extension Development Host.
-
-### Building
-
-```bash
-# Compile TypeScript
-npm run compile
-
-# Build production webview
-npm run build:webview
-
-# Run linter
-npm run lint
-
-# Package extension
-npx vsce package
-```
-
-### Contributing
-
-Contributions are welcome! Please:
-
-1. 🍴 Fork the repository
-2. 🌿 Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. ✏️ Make your changes
-4. ✅ Add tests if applicable
-5. 📝 Commit your changes (`git commit -m 'Add amazing feature'`)
-6. 🚀 Push to the branch (`git push origin feature/amazing-feature`)
-7. 🎉 Open a Pull Request
-
----
-
-## 🚀 Usage
-
-### Quick Start
-
-<table>
-<tr>
-<td width="33%" align="center">
-<br/>
-<h3>1️⃣</h3>
-<b>Open VS Code</b>
-<br/><br/>
-<sub>With the Argus extension installed</sub>
-<br/><br/>
-</td>
-<td width="33%" align="center">
-<br/>
-<h3>2️⃣</h3>
-<b>Find Argus Icon</b>
-<br/><br/>
-<sub>Look for in the Activity Bar (left sidebar)</sub>
-<br/><br/>
-</td>
-<td width="33%" align="center">
-<br/>
-<h3>3️⃣</h3>
-<b>Explore Sessions</b>
-<br/><br/>
-<sub>Sessions appear automatically - just click to analyze!</sub>
-<br/><br/>
-</td>
-</tr>
-</table>
+1. Open VS Code with the Argus extension installed.
+2. Click the **Argus** eye icon in the Activity Bar.
+3. Your sessions are listed in the sidebar — search, filter, and group as needed.
+4. Click any session to open the analysis dashboard in a new tab.
+5. While Claude Code is running, leave the dashboard open: the live watcher updates it in real time.
 
 ### Commands
 
-Access via Command Palette (`Ctrl/Cmd + Shift + P`):
+Available via Command Palette (`Ctrl/Cmd + Shift + P`):
 
 | Command | Description |
-|---------|-------------|
-| `Argus: Refresh Sessions` | Refresh the session list with progress indicator |
-| `Argus: Open Session Detail` | Open detailed analysis for a session |
-| `Argus: Clear All Filters` | Reset all sidebar filters |
-| `Argus: Group by Project` | Group sessions by project directory |
+| --- | --- |
+| `Argus: Refresh Sessions` | Re-scan `~/.claude/projects/` with a progress indicator |
+| `Argus: Open Session Detail` | Open the dashboard for a specific session |
+| `Argus: Clear All Filters` | Reset every active sidebar filter |
+| `Argus: Group by Project` | Group sessions by their project directory |
 | `Argus: Group by Model` | Group sessions by Claude model |
-| `Argus: Flat List` | Remove session grouping |
+| `Argus: Flat List` | Disable grouping |
 
-### Configuration
+## Configuration
 
-Customize Argus in VS Code Settings:
+Argus exposes the following VS Code settings:
 
 ```json
 {
-  "argus.scanDepth": 5,        // Directory depth for scanning (default: 5)
-  "argus.language": "en"       // UI language: "en" or "tr"
+  "argus.scanDepth": 5,
+  "argus.language": "en"
 }
 ```
 
----
+| Setting | Default | Description |
+| --- | --- | --- |
+| `argus.scanDepth` | `5` | Maximum directory depth when scanning `.claude` directories |
+| `argus.language` | `"en"` | UI / findings language — `"en"` or `"tr"` |
 
-## 🏗️ Architecture
+## Architecture
 
-### Technology Stack
+### Stack
 
-<table>
-<tr>
-<td width="50%" valign="top">
+- **Extension host** — TypeScript on the VS Code Extension API, streaming JSONL parser, async file-system scan, file watchers
+- **Webview** — React 19 + Vite 7, Chart.js + Recharts for cost/perf charts, D3.js for the dependency graph, Lucide for tool-type icons
+- **Analyzer** — Pluggable rule engine; each rule consumes the parsed step list and returns typed findings
 
-#### **🔧 Backend (Extension Host)**
-
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?style=flat-square&logo=typescript&logoColor=white)
-![VS Code](https://img.shields.io/badge/VS%20Code%20API-0078d7?style=flat-square&logo=visual-studio-code&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)
-
-- JSONL Parsing Engine
-- Async File System Operations
-- Tree Data Provider
-
-</td>
-<td width="50%" valign="top">
-
-#### **🎨 Frontend (Webview)**
-
-![React](https://img.shields.io/badge/React-19.2-61dafb?style=flat-square&logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-7.3-646cff?style=flat-square&logo=vite&logoColor=white)
-![Chart.js](https://img.shields.io/badge/Chart.js-4.5-ff6384?style=flat-square&logo=chart.js&logoColor=white)
-![D3.js](https://img.shields.io/badge/D3.js-7.9-f9a03c?style=flat-square&logo=d3.js&logoColor=white)
-
-- Recharts 3.7
-- Lucide React Icons
-- CSS Modules
-
-</td>
-</tr>
-</table>
-
-### Project Structure
+### Project layout
 
 ```
 argus-vscode/
-├── src/                        # Extension source code
-│   ├── extension.ts           # Main entry point & command registration
-│   ├── types/                 # TypeScript definitions
-│   │   ├── models.ts          # Core data models & filter state
-│   │   └── parser.ts          # JSONL parsing types
-│   ├── services/              # Business logic layer
-│   │   ├── discoveryService.ts    # Session discovery & file system scanning
-│   │   ├── parserService.ts       # JSONL streaming parser & cost calculation
-│   │   └── analyzerService.ts     # Analysis engine with 6 rules
-│   └── providers/             # VS Code API providers
-│       ├── sessionListViewProvider.ts     # Sidebar: search, filters, calendar, session list
-│       ├── sessionWebviewProviderReact.ts # React webview host & live file watcher
-│       └── datePickerPanel.ts             # Custom date picker panel
+├── src/                              # Extension host
+│   ├── extension.ts                  # Entry point, command registration
+│   ├── types/                        # Models, parser, filter state
+│   ├── services/
+│   │   ├── discoveryService.ts       # Session discovery + file system scan
+│   │   ├── parserService.ts          # JSONL streaming parser, cost calc
+│   │   └── analyzerService.ts        # Rule engine
+│   └── providers/
+│       ├── sessionListViewProvider.ts        # Sidebar webview
+│       ├── sessionWebviewProviderReact.ts    # Detail webview + live watcher
+│       └── datePickerPanel.ts                # Custom date range picker
 │
-├── webview/                   # React UI
-│   ├── src/
-│   │   ├── main.tsx          # React entry point
-│   │   ├── App.tsx           # Main app with tab routing
-│   │   ├── components/       # UI components (11 tabs + utilities)
-│   │   │   ├── StepsTab.tsx       # Steps with search, filter dropdowns, icons
-│   │   │   ├── AnalysisTab.tsx    # Findings & rule results
-│   │   │   ├── CostTab.tsx        # Cost breakdown & charts
-│   │   │   ├── FlowTab.tsx        # File operation flow
-│   │   │   ├── ContextTab.tsx     # Token & cache analysis
-│   │   │   ├── PerformanceTab.tsx # Efficiency scoring
-│   │   │   ├── InsightsTab.tsx    # Recommendations
-│   │   │   ├── DependencyGraph.tsx # D3-powered graph
-│   │   │   ├── SessionNotes.tsx   # Per-session notes
-│   │   │   └── ...
-│   │   ├── styles/           # Global CSS & theme variables
-│   │   └── types/            # Frontend types
-│   └── index.html            # Webview template
+├── webview/                          # React UI
+│   └── src/
+│       ├── App.tsx                   # Tab routing
+│       └── components/               # Steps / Analysis / Cost / Flow / ...
 │
-├── package.json              # Extension manifest
-├── tsconfig.json            # TypeScript config
-└── vite.config.ts           # Vite bundler config
+├── resources/                        # Sidebar SVG icons
+├── screenshots/                      # README assets
+├── package.json                      # Extension manifest
+├── tsconfig.json
+└── vite.config.ts
 ```
 
-### Analysis Engine
-
-Argus uses a **rule-based analysis system**:
+### Analysis engine
 
 ```typescript
 interface AnalysisRule {
   name: string;
   analyze(steps: Step[]): Finding[];
 }
-
-// Built-in Rules:
-- DuplicateReadRule       // Detects duplicate file reads
-- UnusedReadRule          // Finds unused tool outputs
-- RetryLoopRule           // Identifies retry patterns
-- FailedToolRule          // Tracks failures
-- ContextPressureRule     // Memory pressure detection
-- CompactionDetectedRule  // Context compression events
 ```
 
----
+Built-in rules: `DuplicateReadRule`, `UnusedReadRule`, `RetryLoopRule`, `FailedToolRule`, `ContextPressureRule`, `CompactionDetectedRule`. Adding a new rule is a single file plus one entry in the analyzer registry.
 
-## 📊 Project Stats
+## Use Cases
 
-<div align="center">
+| For developers | For teams | For researchers |
+| --- | --- | --- |
+| See how Claude Code actually approaches your tasks | Audit AI usage and cost across projects | Study LLM-driven development patterns at the trace level |
+| Tighten prompts based on real token spend | Identify and codify best practices | Analyze tool-call distributions and retry behavior |
+| Catch retry loops and duplicate reads early | Build internal training material from real sessions | Investigate context-window and compaction strategies |
+| Track per-session AI-assisted development cost | Set budgets and monitor against them | Compare model behavior on identical workloads |
 
-<table>
-<tr>
-<td align="center" width="25%">
-<br/>
-<h3>9,900+</h3>
-<sub><b>Lines of Code</b></sub>
-<br/><br/>
-</td>
-<td align="center" width="25%">
-<br/>
-<h3>40+</h3>
-<sub><b>Source Files</b></sub>
-<br/><br/>
-</td>
-<td align="center" width="25%">
-<br/>
-<h3>11+</h3>
-<sub><b>React Components</b></sub>
-<br/><br/>
-</td>
-<td align="center" width="25%">
-<br/>
-<h3>6</h3>
-<sub><b>Analysis Rules</b></sub>
-<br/><br/>
-</td>
-</tr>
-<tr>
-<td align="center" width="25%">
-<br/>
-<h3>8+</h3>
-<sub><b>Visualization Types</b></sub>
-<br/><br/>
-</td>
-<td align="center" width="25%">
-<br/>
-<h3>2</h3>
-<sub><b>Languages (EN/TR)</b></sub>
-<br/><br/>
-</td>
-<td align="center" width="25%">
-<br/>
-<h3>12</h3>
-<sub><b>Dependencies</b></sub>
-<br/><br/>
-</td>
-<td align="center" width="25%">
-<br/>
-<h3>10</h3>
-<sub><b>Dev Dependencies</b></sub>
-<br/><br/>
-</td>
-</tr>
-</table>
+## Contributing
 
-</div>
+Contributions are welcome.
 
-### Key Capabilities
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Make your changes — TypeScript on both extension host and webview
+4. Run `npm run lint` and `npm run compile` before committing
+5. Open a pull request describing the change and the motivation
 
-- ✅ **JSONL Parsing**: High-performance streaming parser with early-exit optimization
-- ✅ **Cost Calculation**: Accurate token-based cost estimation per step and session
-- ✅ **Dependency Tracking**: File operation dependency graph generation with D3.js
-- ✅ **Context Metrics**: Cache hit ratio and token utilization analysis
-- ✅ **Real-time Updates**: Live session monitoring via file watchers as Claude Code runs
-- ✅ **Multi-session Management**: Handle dozens of sessions with grouping and filtering
-- ✅ **Advanced Filtering**: Model/date/text search in sidebar, tool/status/sort in Steps tab
-- ✅ **Custom Calendar**: Built-in date range picker with range visualization
-- ✅ **Step Duration**: Per-step timing calculated from consecutive timestamps
-- ✅ **Session Notes**: Persist notes per session for future reference
+For larger changes please open an issue first so we can align on direction.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ---
 
-## 🎨 Design Philosophy
-
-Argus follows the **"Ocular Systems"** philosophy:
-
-> *"See everything, understand everything, optimize everything"*
-
-- **Visibility**: Make the invisible visible
-- **🎯 Precision**: Accurate, actionable insights
-- **⚡ Performance**: Fast, responsive, non-intrusive
-- **🎨 Beauty**: Delightful UI that makes analysis enjoyable
-- **🔬 Depth**: Surface-level overview to deep technical details
-
----
-
-## 🔄 Ported from Wails Desktop App
-
-Argus VS Code extension is a complete rewrite of the original Argus desktop application:
-
-### Migration Journey
-
-| Original (Wails) | VS Code Extension |
-|-----------------|-------------------|
-| Go backend | TypeScript backend |
-| React SPA | React Webview |
-| Wails bridge | VS Code Extension API |
-| Standalone desktop app | Integrated VS Code experience |
-| Manual session import | Automatic discovery |
-
-### Why VS Code?
-
-- ✅ **Native Integration**: Works where developers already are
-- ✅ **Better UX**: No app switching, seamless workflow
-- ✅ **Auto Discovery**: No manual session loading
-- ✅ **Theming**: Inherits VS Code theme automatically
-- ✅ **Commands**: Accessible via Command Palette
-
----
-
-## 📚 Use Cases
-
-<table>
-<tr>
-<td width="33%" valign="top">
-
-### 👨‍💻 For Developers
-
-- ✅ Understand how Claude Code approaches your problems
-- ✅ Learn which prompts are most efficient
-- ✅ Optimize your interaction patterns
-- ✅ Track AI-assisted development costs
-
-</td>
-<td width="33%" valign="top">
-
-### 👥 For Teams
-
-- ✅ Audit AI usage across projects
-- ✅ Identify best practices
-- ✅ Training material for effective Claude Code usage
-- ✅ Cost management and budgeting
-
-</td>
-<td width="33%" valign="top">
-
-### 🔬 For Researchers
-
-- ✅ Study LLM-based development patterns
-- ✅ Analyze tool usage patterns
-- ✅ Understand context management strategies
-- ✅ Research AI-human collaboration workflows
-
-</td>
-</tr>
-</table>
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details
-
----
-
-<div align="center">
-
-<br/>
-
-### 👁️ **Built with Argus, Analyzed by Argus**
-
-<br/>
-
-**Made with ❤️ by developers, for developers**
-
-<br/>
-<br/>
-
-[![Report Bug](https://img.shields.io/badge/🐛_Report_Bug-red?style=for-the-badge)](https://github.com/yessGlory17/argus/issues)
-[![Request Feature](https://img.shields.io/badge/✨_Request_Feature-blue?style=for-the-badge)](https://github.com/yessGlory17/argus/issues)
-[![Documentation](https://img.shields.io/badge/📚_Documentation-green?style=for-the-badge)](https://github.com/yessGlory17/argus/wiki)
-
-<br/>
-<br/>
-
----
-
-<sub>⭐ **Star us on GitHub if you find Argus useful!**</sub>
-
-<br/>
-
-</div>
+<p align="center"><sub>Built by developers, for developers running Claude Code in anger.</sub></p>
+<p align="center"><sub>⭐ Star the repo if Argus saves you tokens, time, or sanity.</sub></p>
