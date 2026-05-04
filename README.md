@@ -43,6 +43,7 @@ Named after the hundred-eyed watchman of Greek mythology, Argus is built for dev
     <img src="https://img.youtube.com/vi/HmHOI1PBn_M/maxresdefault.jpg" alt="Video Başlığı" style="width:100%;">
   </a>
 </div>
+
 ## Screenshots
 
 <p align="center"><strong>Steps</strong> — searchable, filterable execution log</p>
