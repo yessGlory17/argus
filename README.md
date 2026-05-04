@@ -135,7 +135,7 @@ Argus ships with a rule-based analyzer that flags the patterns that quietly wast
 Grab the latest `.vsix` from the [Releases page](https://github.com/yessGlory17/argus/releases) and install it:
 
 ```bash
-code --install-extension argus-claude-0.2.0.vsix
+code --install-extension argus-claude-0.3.0.vsix
 ```
 
 Open VS Code, click the **Argus** eye icon in the Activity Bar, and your existing Claude Code sessions appear automatically. No login, no upload, no config — transcripts never leave your machine.
@@ -149,7 +149,7 @@ npm install
 npm run compile
 npm run build:webview
 npx vsce package
-code --install-extension argus-claude-0.2.0.vsix
+code --install-extension argus-claude-0.3.0.vsix
 ```
 
 ## Usage
