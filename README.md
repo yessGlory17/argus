@@ -37,10 +37,12 @@ Instead of treating each agent run as an opaque black box, Argus makes the full 
 
 Named after the hundred-eyed watchman of Greek mythology, Argus is built for developers, teams, and researchers who want to understand — not guess — how their Claude Code agents spend time, money, and context.
 
-<p align="center">
-  <video src="screenshots/video.mp4" controls width="1280"></video>
-</p>
-
+## Video
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=HmHOI1PBn_M">
+    <img src="https://img.youtube.com/vi/HmHOI1PBn_M/maxresdefault.jpg" alt="Video Başlığı" style="width:100%;">
+  </a>
+</div>
 ## Screenshots
 
 <p align="center"><strong>Steps</strong> — searchable, filterable execution log</p>
