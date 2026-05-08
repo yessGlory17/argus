@@ -2,7 +2,7 @@
   "name": "argus-claude",
   "displayName": "Argus - Claude Code Agent Monitoring & Observability on VSCode",
   "description": "Monitoring and observability for Claude Code agent sessions inside VS Code — live transcripts, cost telemetry, context-window metrics, dependency graphs, and rule-based analysis of tool calls, retry loops, and compaction events.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "argus-claude",
   "author": {
     "name": "Ozgur Kurucan",
