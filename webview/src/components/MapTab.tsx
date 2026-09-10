@@ -128,16 +128,24 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
   // Extract file events relative to cwd
   const stepEvents = useMemo<StepEvent[]>(() => {
     if (!cwd) return [];
-    const cwdNorm = cwd.replace(/\/+$/, '');
+    // Normalise separators so Windows paths compare like POSIX ones, and
+    // compare drive-letter paths case-insensitively (VS Code often reports
+    // the cwd with a lowercase drive letter while tool calls use uppercase).
+    const toSlash = (p: string) => p.replace(/\\/g, '/').replace(/\/+$/, '');
+    const isWinAbs = (p: string) => /^[a-zA-Z]:\//.test(p);
+    const cwdNorm = toSlash(cwd);
+    const cwdCmp = isWinAbs(cwdNorm) ? cwdNorm.toLowerCase() : cwdNorm;
     const out: StepEvent[] = [];
     for (const step of steps) {
-      const fp: string | undefined = step.toolInput?.file_path;
-      if (!fp || typeof fp !== 'string') continue;
+      const rawFp: string | undefined = step.toolInput?.file_path;
+      if (!rawFp || typeof rawFp !== 'string') continue;
+      const fp = toSlash(rawFp);
+      const fpCmp = isWinAbs(fp) ? fp.toLowerCase() : fp;
       let rel: string | null = null;
-      if (fp === cwdNorm) continue;
-      if (fp.startsWith(cwdNorm + '/')) {
+      if (fpCmp === cwdCmp) continue;
+      if (fpCmp.startsWith(cwdCmp + '/')) {
         rel = fp.slice(cwdNorm.length + 1);
-      } else if (!fp.startsWith('/') && !/^[a-zA-Z]:[\\/]/.test(fp)) {
+      } else if (!fp.startsWith('/') && !isWinAbs(fp)) {
         rel = fp;
       } else {
         continue;
@@ -189,7 +197,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
 
   // Build the tree up to the current step
   const { root, lastRevealedPath, lastAppliedStep } = useMemo(() => {
-    const rootName = cwd ? cwd.split('/').filter(Boolean).pop() || cwd : 'project';
+    const rootName = cwd ? cwd.split(/[\\/]/).filter(Boolean).pop() || cwd : 'project';
     const rootNode: TreeNode = {
       name: rootName,
       path: '',
@@ -865,7 +873,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
         </div>
         <div className="map-stat map-stat-cwd" title={cwd}>
           <span className="map-stat-label">cwd</span>
-          <span className="map-stat-value">{truncateMiddle(cwd.split('/').slice(-2).join('/'), 32)}</span>
+          <span className="map-stat-value">{truncateMiddle(cwd.split(/[\\/]/).filter(Boolean).slice(-2).join('/'), 32)}</span>
         </div>
       </div>
     </div>
