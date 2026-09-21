@@ -48,3 +48,5 @@ yarn-error.log*
 *.temp
 .cache/
 .claude/*
+# GA4 telemetry credentials (bundled into the .vsix, never committed)
+telemetry-config.json

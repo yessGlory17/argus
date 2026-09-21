@@ -9,6 +9,7 @@ import PerformanceTab from './components/PerformanceTab';
 import InsightsTab from './components/InsightsTab';
 import MapTab, { DirEntry } from './components/MapTab';
 import SessionNotes from './components/SessionNotes';
+import { trackFeature } from './telemetry';
 import './styles/global.css';
 import './styles/App.css';
 
@@ -50,6 +51,12 @@ function App() {
     return () => window.removeEventListener('message', handleMessage);
   }, [isLive]);
 
+  // Anonymous usage stats: only the tab name is sent; the extension host
+  // validates it against a fixed list before forwarding.
+  useEffect(() => {
+    window.vscodeApi?.postMessage({ type: 'telemetry', event: 'tab_viewed', tab: activeTab });
+  }, [activeTab]);
+
   // Hooks must run unconditionally on every render (Rules of Hooks). Compute
   // the flattened timeline before any early returns.
   const flatSteps = useMemo(
@@ -84,6 +91,7 @@ function App() {
     (session.analysis?.totalCost ?? session.totalCost ?? 0) + agentSubCost;
 
   const goToStep = (stepIndex: number) => {
+    trackFeature('goto_step', activeTab);
     setActiveTab('steps');
     setHighlightStep(stepIndex);
   };

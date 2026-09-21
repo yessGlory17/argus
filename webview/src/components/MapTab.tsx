@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { Step } from '../types/session';
+import { trackFeature } from '../telemetry';
 import './MapTab.css';
 
 export interface DirEntry {
@@ -753,6 +754,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
             onClick={() => {
               if (currentStep >= steps.length) setCurrentStep(0);
               setPlaying((p) => !p);
+              trackFeature('map_play');
             }}
             title={playing ? 'Pause' : 'Play'}
           >
@@ -763,6 +765,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
             onClick={() => {
               setPlaying(false);
               setCurrentStep(0);
+              trackFeature('map_reset');
             }}
             title="Reset to start"
           >
@@ -773,6 +776,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
             onClick={() => {
               setPlaying(false);
               setCurrentStep(steps.length);
+              trackFeature('map_jump_end');
             }}
             title="Jump to end"
           >
@@ -815,6 +819,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
             onChange={(e) => {
               setPlaying(false);
               setCurrentStep(Number(e.target.value));
+              trackFeature('map_slider');
             }}
           />
         </div>
@@ -826,7 +831,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
           <select
             className="map-speed"
             value={speedMs}
-            onChange={(e) => setSpeedMs(Number(e.target.value))}
+            onChange={(e) => { setSpeedMs(Number(e.target.value)); trackFeature('map_speed'); }}
             title="Playback speed"
           >
             <option value={800}>0.5×</option>
@@ -834,7 +839,7 @@ const MapTab = ({ steps, cwd, topLevelEntries, onGoToStep }: Props) => {
             <option value={150}>2×</option>
             <option value={60}>4×</option>
           </select>
-          <button className="map-btn" onClick={resetView} title="Reset view">
+          <button className="map-btn" onClick={() => { resetView(); trackFeature('map_reset_view'); }} title="Reset view">
             ⊕
           </button>
         </div>

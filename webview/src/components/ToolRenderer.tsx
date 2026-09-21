@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import hljs from 'highlight.js';
 import { diffLines } from 'diff';
 import { Step } from '../types/session';
+import { trackFeature } from '../telemetry';
 import 'highlight.js/styles/github-dark.css';
 import './ToolRenderer.css';
 
@@ -607,7 +608,7 @@ const ToolRenderer = ({ step }: ToolRendererProps) => {
             </button>
             <button
               className={`tr-toggle-btn${showRaw ? ' active' : ''}`}
-              onClick={() => setShowRaw(true)}
+              onClick={() => { setShowRaw(true); trackFeature('raw_view'); }}
               type="button"
             >
               Raw

@@ -3,6 +3,7 @@ import { Step, Subagent, Finding } from '../types/session';
 import ToolRenderer from './ToolRenderer';
 import ContentRenderer from './ContentRenderer';
 import RendererErrorBoundary from './RendererErrorBoundary';
+import { trackFeature } from '../telemetry';
 import './StepsTab.css';
 
 interface Props {
@@ -514,7 +515,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
             placeholder="Search steps..."
             spellCheck={false}
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={e => { setSearchQuery(e.target.value); trackFeature('steps_search'); }}
           />
           {searchQuery && (
             <button className="steps-search-clear" onClick={() => setSearchQuery('')}>×</button>
@@ -527,7 +528,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
             label={toolLabel}
             items={toolItems}
             selected={toolFilter.size === 0 ? 'all' : toolFilter}
-            onSelect={toggleToolFilter}
+            onSelect={(v) => { toggleToolFilter(v); trackFeature('steps_tool_filter'); }}
             isActive={toolFilter.size > 0}
             multiSelect
             openDropdown={openDropdown}
@@ -541,7 +542,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
             label={statusLabel}
             items={statusItems}
             selected={statusFilter}
-            onSelect={setStatusFilter}
+            onSelect={(v) => { setStatusFilter(v); trackFeature('steps_status_filter'); }}
             isActive={statusFilter !== 'all'}
             openDropdown={openDropdown}
             setOpenDropdown={setOpenDropdown}
@@ -554,7 +555,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
             label={SORT_LABELS[sortMode]}
             items={sortItems}
             selected={sortMode}
-            onSelect={setSortMode}
+            onSelect={(v) => { setSortMode(v); trackFeature('steps_sort'); }}
             isActive={sortMode !== 'newest'}
             openDropdown={openDropdown}
             setOpenDropdown={setOpenDropdown}
@@ -563,7 +564,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
           {hasActiveFilters && (
             <>
               <div className="steps-divider" />
-              <button className="steps-clear-filters" onClick={clearAllFilters} title="Clear all filters">
+              <button className="steps-clear-filters" onClick={() => { clearAllFilters(); trackFeature('steps_clear_filters'); }} title="Clear all filters">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>
                 </svg>
@@ -619,7 +620,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
                 isLastAgentInRun ? 'step-agent-last' : '',
               ].filter(Boolean).join(' ')}
             >
-              <button className="step-header" onClick={() => toggleStep(k)}>
+              <button className="step-header" onClick={() => { toggleStep(k); trackFeature('step_expand'); }}>
                 <div className="step-left">
                   <StepIcon step={step} />
                   <span className="step-index">#{k}</span>
@@ -636,6 +637,7 @@ const StepsTab = ({ steps, subagents, findings, highlightStep }: Props) => {
                       onClick={(e) => {
                         e.stopPropagation();
                         for (const a of linkedAgents) toggleAgent(a.agentId);
+                        trackFeature('agent_steps_toggle');
                       }}
                       title={allCollapsed ? 'Show agent steps' : 'Hide agent steps'}
                     >

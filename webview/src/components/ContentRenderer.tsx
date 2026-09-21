@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Marked } from 'marked';
 import hljs from 'highlight.js';
 import { Step } from '../types/session';
+import { trackFeature } from '../telemetry';
 import './ContentRenderer.css';
 
 // ─── Markdown engine with code-block highlighting ───────────────────────
@@ -75,7 +76,7 @@ const ContentRenderer = ({ step }: Props) => {
           <button
             type="button"
             className={`cr-toggle-btn${showRaw ? ' active' : ''}`}
-            onClick={() => setShowRaw(true)}
+            onClick={() => { setShowRaw(true); trackFeature('raw_view'); }}
           >
             Raw
           </button>

@@ -5,11 +5,16 @@ import { ParserService } from '../services/parserService';
 import { AnalyzerService } from '../services/analyzerService';
 import { DiscoveryService } from '../services/discoveryService';
 import { SessionDetail } from '../types/models';
+import {
+  track, bucket, modelFamily, TELEMETRY_TABS, TELEMETRY_FEATURES, TELEMETRY_RULES,
+} from '../telemetry/telemetry';
 
 export class SessionWebviewProviderReact {
   private panels: Map<string, vscode.WebviewPanel> = new Map();
   private watchers: Map<string, fs.FSWatcher> = new Map();
   private subagentWatchers: Map<string, fs.FSWatcher> = new Map();
+  private liveUpdateCounts: Map<string, number> = new Map();
+  private lastParseMs = 0;
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -33,6 +38,7 @@ export class SessionWebviewProviderReact {
     }
 
     // Load session data
+    const loadStarted = Date.now();
     const sessionData = await this.loadSessionData(sessionId);
     if (!sessionData) {
       vscode.window.showErrorMessage('Failed to load session data');
@@ -52,6 +58,10 @@ export class SessionWebviewProviderReact {
         ],
       }
     );
+
+    const openedAt = Date.now();
+    this.trackSessionOpened(sessionId, sessionData, Date.now() - loadStarted);
+    const featuresSeen = new Set<string>();
 
     // Set HTML content
     panel.webview.html = this.getWebviewContent(panel.webview);
@@ -78,6 +88,20 @@ export class SessionWebviewProviderReact {
             panel.webview.postMessage({ type: 'liveMode', active: true });
             this.sendDirectoryTree(panel, sessionData.project);
             break;
+          case 'telemetry':
+            // Webview input is untrusted: only forward known tab names.
+            if (message.event === 'tab_viewed' && TELEMETRY_TABS.has(message.tab)) {
+              track('tab_viewed', { tab: message.tab });
+            } else if (message.event === 'feature_used' && TELEMETRY_FEATURES.has(message.feature)) {
+              // Once per feature (and source tab) per panel.
+              const tab = TELEMETRY_TABS.has(message.tab) ? message.tab : undefined;
+              const key = `${message.feature}:${tab ?? ''}`;
+              if (!featuresSeen.has(key)) {
+                featuresSeen.add(key);
+                track('feature_used', { feature: message.feature, tab });
+              }
+            }
+            break;
         }
       },
       undefined,
@@ -92,9 +116,53 @@ export class SessionWebviewProviderReact {
 
     // Clean up when panel is closed
     panel.onDidDispose(() => {
+      track('session_closed', {
+        open_seconds: bucket((Date.now() - openedAt) / 1000, [0, 10, 60, 300, 1800, 7200]),
+        live_updates: bucket(this.liveUpdateCounts.get(sessionId) ?? 0),
+      });
+      this.liveUpdateCounts.delete(sessionId);
       this.stopWatching(sessionId);
       this.panels.delete(panelKey);
     });
+  }
+
+  private trackSessionOpened(sessionId: string, data: SessionDetail, loadMs: number): void {
+    let fileSizeKb = 0;
+    const info = this.discoveryService.getSessionFilePath(sessionId);
+    try {
+      if (info) fileSizeKb = fs.statSync(info.filePath).size / 1024;
+    } catch {
+      // ignore
+    }
+
+    const analyses = [data.analysis, ...data.subagents.map((s) => s.analysis)];
+    const ruleCounts = new Map<string, number>();
+    let findingCount = 0;
+    for (const analysis of analyses) {
+      for (const f of analysis?.findings ?? []) {
+        findingCount++;
+        const rule = TELEMETRY_RULES.has(f.rule) ? f.rule : 'other';
+        ruleCounts.set(rule, (ruleCounts.get(rule) ?? 0) + 1);
+      }
+    }
+
+    const ctx = data.analysis?.contextMetrics;
+    track('session_opened', {
+      model_family: modelFamily(data.model),
+      step_count: bucket(data.steps.length),
+      subagent_count: bucket(data.subagents.length),
+      finding_count: bucket(findingCount),
+      load_ms: bucket(loadMs, [0, 100, 500, 1000, 3000, 10000]),
+      parse_ms: bucket(this.lastParseMs, [0, 50, 200, 500, 1000, 3000]),
+      file_size_kb: bucket(fileSizeKb, [0, 100, 1000, 10000, 50000]),
+      peak_context_k: ctx ? bucket(ctx.peakInputTokens / 1000, [0, 50, 100, 150, 200, 500, 1000]) : undefined,
+      compactions: ctx ? bucket(ctx.compactionCount, [0, 1, 2, 5, 10]) : undefined,
+      cache_hit_pct: ctx ? bucket(ctx.cacheHitRatio * 100, [0, 25, 50, 75, 90]) : undefined,
+    });
+
+    for (const [rule, count] of ruleCounts) {
+      track('analysis_rule_fired', { rule, rule_count: bucket(count, [0, 1, 2, 5, 10, 50]) });
+    }
   }
 
   async openDashboard(): Promise<void> {
@@ -156,6 +224,7 @@ export class SessionWebviewProviderReact {
         try {
           const updatedData = await this.loadSessionData(sessionId);
           if (updatedData) {
+            this.liveUpdateCounts.set(sessionId, (this.liveUpdateCounts.get(sessionId) ?? 0) + 1);
             panel.webview.postMessage({
               type: 'sessionData',
               data: updatedData,
@@ -279,7 +348,9 @@ export class SessionWebviewProviderReact {
       console.log('📂 Session file:', sessionInfo.filePath);
 
       // Parse JSONL file
+      const parseStarted = Date.now();
       const events = await this.parserService.parseFile(sessionInfo.filePath);
+      this.lastParseMs = Date.now() - parseStarted;
       console.log('📊 Parsed events:', events.length);
 
       if (!events.length) {

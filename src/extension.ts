@@ -8,8 +8,11 @@ import { SessionListViewProvider } from './providers/sessionListViewProvider';
 import { DatePickerPanel } from './providers/datePickerPanel';
 import { FilterState, DEFAULT_FILTER_STATE, GroupMode, DatePreset, SessionSummary } from './types/models';
 import { getClaudeConfigDir } from './utils/claudePaths';
+import { initTelemetry, track, trackError, flushTelemetry, bucket } from './telemetry/telemetry';
 
 export function activate(context: vscode.ExtensionContext) {
+  initTelemetry(context);
+
   // Initialize services
   const discoveryService = new DiscoveryService();
   const parserService = new ParserService();
@@ -92,16 +95,29 @@ export function activate(context: vscode.ExtensionContext) {
   // Coalesce concurrent discovery requests so the view-open path and the
   // activation path don't both walk ~/.claude at the same time.
   let discoveryPromise: Promise<void> | null = null;
+  let discoveryTracked = false;
 
   function ensureSessions(): Promise<void> {
     if (discoveryPromise) {
       return discoveryPromise;
     }
     discoveryPromise = (async () => {
+      const started = Date.now();
       try {
         await discoveryService.refreshDiscovery();
         allSessions = await discoveryService.getSessionList();
         refreshList();
+        if (!discoveryTracked) {
+          discoveryTracked = true;
+          track('sessions_discovered', {
+            session_count: bucket(allSessions.length),
+            project_count: bucket(new Set(allSessions.map(s => s.project)).size),
+            duration_ms: bucket(Date.now() - started, [0, 100, 500, 1000, 3000, 10000]),
+          });
+        }
+      } catch (error) {
+        trackError('discovery', error);
+        throw error;
       } finally {
         discoveryPromise = null;
       }
@@ -131,6 +147,7 @@ export function activate(context: vscode.ExtensionContext) {
       filterState.selectedModels.splice(idx, 1);
     } else {
       filterState.selectedModels.push(model);
+      track('filter_changed', { filter: 'model', filter_value: model });
     }
     syncContextKeys();
     refreshList();
@@ -138,6 +155,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   function setDatePreset(preset: DatePreset) {
     filterState.datePreset = preset;
+    track('filter_changed', { filter: 'date', filter_value: preset });
     if (preset !== 'custom') {
       filterState.customDateFrom = undefined;
       filterState.customDateTo = undefined;
@@ -148,6 +166,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   function setGroupMode(mode: GroupMode) {
     filterState.groupMode = mode;
+    track('filter_changed', { filter: 'group', filter_value: mode });
     syncContextKeys();
     refreshList();
   }
@@ -159,6 +178,10 @@ export function activate(context: vscode.ExtensionContext) {
   const listViewProvider = new SessionListViewProvider(
     context.extensionPath,
     (query) => {
+      // Only record that search was used — never the query text.
+      if (!filterState.searchQuery && query) {
+        track('filter_changed', { filter: 'search' });
+      }
       filterState.searchQuery = query;
       syncContextKeys();
       refreshList();
@@ -168,11 +191,14 @@ export function activate(context: vscode.ExtensionContext) {
     },
     (model) => {
       filterState.selectedModels = model ? [model] : [];
+      if (model) track('filter_changed', { filter: 'model', filter_value: normalizeModel(model) });
       syncContextKeys();
       refreshList();
     },
     (preset, from, to) => {
       filterState.datePreset = preset as any;
+      const knownPresets = ['all', '1h', '24h', '7d', '30d', 'custom'];
+      track('filter_changed', { filter: 'date', filter_value: knownPresets.includes(preset) ? preset : 'other' });
       if (preset === 'custom') {
         filterState.customDateFrom = from;
         filterState.customDateTo = to;
@@ -207,7 +233,9 @@ export function activate(context: vscode.ExtensionContext) {
             allSessions = await discoveryService.getSessionList();
             refreshList();
             vscode.window.showInformationMessage(`Sessions refreshed (${allSessions.length} found)`);
+            track('sessions_refreshed', { session_count: bucket(allSessions.length) });
           } catch (error) {
+            trackError('refresh', error);
             const msg = error instanceof Error ? error.message : String(error);
             vscode.window.showErrorMessage('Failed to refresh sessions: ' + msg);
           }
@@ -221,6 +249,7 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         await webviewProvider.openSessionDetail(sessionId);
       } catch (error) {
+        trackError('open_session', error);
         const msg = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage('Failed to open session: ' + msg);
       }
@@ -231,6 +260,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('argus.clearFilters', () => {
       filterState = { ...DEFAULT_FILTER_STATE };
+      track('filters_cleared');
       listViewProvider.clearSearch();
       syncContextKeys();
       refreshList();
@@ -258,6 +288,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('argus.setDateCustom', () => {
       DatePickerPanel.show(context, (from, to) => {
         filterState.datePreset = 'custom';
+        track('filter_changed', { filter: 'date', filter_value: 'custom' });
         filterState.customDateFrom = from;
         filterState.customDateTo = to;
         syncContextKeys();
@@ -313,4 +344,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(statusBarItem);
 }
 
-export function deactivate() {}
+export function deactivate(): Promise<void> {
+  return flushTelemetry();
+}

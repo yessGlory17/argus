@@ -16,3 +16,4 @@ vsc-extension-quickstart.md
 **/*.ts
 !out/**/*.js
 vite.config.*
+scripts/**

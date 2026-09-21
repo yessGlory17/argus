@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { trackFeature } from '../telemetry';
 import './SessionNotes.css';
 
 interface Props {
@@ -45,11 +46,13 @@ const SessionNotes = ({ sessionId }: Props) => {
     };
 
     saveNotes([...notes, note]);
+    trackFeature('note_add');
     setNewNote('');
   };
 
   const deleteNote = (id: string) => {
     saveNotes(notes.filter(n => n.id !== id));
+    trackFeature('note_delete');
   };
 
   const formatTime = (timestamp: number) => {
@@ -65,7 +68,7 @@ const SessionNotes = ({ sessionId }: Props) => {
 
   return (
     <div className={`session-notes ${isExpanded ? 'expanded' : ''}`}>
-      <button className="notes-toggle" onClick={() => setIsExpanded(!isExpanded)}>
+      <button className="notes-toggle" onClick={() => { if (!isExpanded) trackFeature('notes_open'); setIsExpanded(!isExpanded); }}>
         📝 Notes ({notes.length})
       </button>
 
